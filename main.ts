@@ -1,7 +1,7 @@
 import { Deco } from "@deco/deco";
+import { mcpServer } from "@deco/mcp";
 import { Hono } from "@hono/hono";
 import manifest, { Manifest } from "./manifest.gen.ts";
-import { mcpServer } from "./mcp/server.ts";
 
 const app = new Hono();
 const deco = await Deco.init<Manifest>({ manifest });
