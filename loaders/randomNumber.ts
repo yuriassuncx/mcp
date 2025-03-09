@@ -1,5 +1,5 @@
 /**
- * @title random_number
+ * @name random_number
  * @description Returns a random number between 0 and 1
  */
 export default function randomNumber() {
