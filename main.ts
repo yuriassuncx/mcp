@@ -4,7 +4,9 @@ import { Hono } from "@hono/hono";
 import manifest, { Manifest } from "./manifest.gen.ts";
 
 const app = new Hono();
-const deco = await Deco.init<Manifest>({ manifest });
+const deco = await Deco.init<Manifest>({
+  manifest,
+});
 const envPort = Deno.env.get("PORT");
 
 app.use("/*", mcpServer(deco));
