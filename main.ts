@@ -19,8 +19,11 @@ app.use("/apps/:appName/:installId/*", async (ctx, next) => {
   return run();
 });
 
-app.use("/*", MCP_SERVER);
-
-app.use("/*", async (ctx) => ctx.res = await MCP_REGISTRY!.fetch(ctx.req.raw));
+app.use("/*", (ctx, next) => {
+  const run = Context.bind(MCP_REGISTRY!.ctx, async () => {
+    return await MCP_SERVER!(ctx, next);
+  });
+  return run();
+});
 
 Deno.serve({ handler: app.fetch, port: envPort ? +envPort : 8000 });

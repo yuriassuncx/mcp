@@ -5,8 +5,8 @@ export interface MCP extends Tool {
   resolveType: string;
 }
 /**
- * @name LIST_MCPS
- * @description List all MCPs
+ * @name LIST_AVAILABLE_MCPS
+ * @description List all available MCPs
  */
 export default async function listMCPs(): Promise<MCP[]> {
   const names = new Map<string, string>();

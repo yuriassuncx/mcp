@@ -26,12 +26,15 @@ export interface InstallURL {
    */
   message?: string;
 }
-
+const envName = Deno.env.get("DECO_ENV_NAME");
+const siteName = Deno.env.get("DECO_SITE_NAME");
+const subdomain = envName ? `${envName}--${siteName}` : siteName;
+const MY_DOMAIN = `wss://${subdomain}.deco.site`;
 /**
- * @name INSTALL_MCP
- * @description Install an MCP
+ * @name CONFIGURE_MCP
+ * @description Configure an MCP and returns its url
  */
-export default async function installMCP(
+export default async function configureMCP(
   props: Props,
   _req: Request,
   ctx: AppContext,
@@ -53,6 +56,6 @@ export default async function installMCP(
   });
   return {
     success: true,
-    url: `/apps/${props.name}/${installId}/mcp/sse`,
+    url: `${MY_DOMAIN}/apps/${props.name}/${installId}/mcp/ws`,
   };
 }
