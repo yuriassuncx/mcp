@@ -35,7 +35,7 @@ export default async function installMCP(
   ctx: AppContext,
 ): Promise<InstallURL> {
   const list: MCP[] = await ctx.invoke.site.loaders.mcps.list();
-  const resolveType = list.find((t) => t.name === props.name)?.resolveType;
+  const resolveType = list.find((t: MCP) => t.name === props.name)?.resolveType;
   if (!resolveType) {
     return {
       url: null,

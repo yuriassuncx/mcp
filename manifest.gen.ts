@@ -3,8 +3,7 @@
 // This file is automatically updated during development when running `dev.ts`.
 
 import * as $$$$$$$$$0 from "./actions/mcps/install.ts";
-import * as $$$$$$$$$$$0 from "./apps/deco/vtex.ts";
-import * as $$$$$$$$$$$1 from "./apps/site.ts";
+import * as $$$$$$$$$$$0 from "./apps/site.ts";
 import * as $$$0 from "./loaders/mcps/list.ts";
 
 const manifest = {
@@ -15,8 +14,7 @@ const manifest = {
     "site/actions/mcps/install.ts": $$$$$$$$$0,
   },
   "apps": {
-    "site/apps/deco/vtex.ts": $$$$$$$$$$$0,
-    "site/apps/site.ts": $$$$$$$$$$$1,
+    "site/apps/site.ts": $$$$$$$$$$$0,
   },
   "name": "site",
   "baseUrl": import.meta.url,

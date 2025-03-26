@@ -1,5 +1,6 @@
 import { Hono } from "@hono/hono";
 import { decoInstance, MCP_REGISTRY, MCP_SERVER } from "site/registry.ts";
+import { Context } from "@deco/deco";
 
 const app = new Hono();
 const envPort = Deno.env.get("PORT");
@@ -12,7 +13,10 @@ app.use("/apps/:appName/:installId/*", async (ctx, next) => {
   if (!instance) {
     return ctx.notFound();
   }
-  return ctx.res = await instance.server(ctx, next);
+  const run = Context.bind(instance.deco, async () => {
+    return ctx.res = await instance.server(ctx, next);
+  });
+  return run();
 });
 
 app.use("/*", MCP_SERVER);

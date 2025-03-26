@@ -14,19 +14,19 @@ export interface Props { }
 export const installStorage: Storage = {
   async getItem<T>(key: string) {
     const kv = await Deno.openKv();
-    const result = await kv.get<T>(['storage', key]);
+    const result = await kv.get<T>(["storage", key]);
     await kv.close();
     return result.value;
   },
   async setItem<T>(key: string, value: T) {
     const kv = await Deno.openKv();
-    await kv.set(['storage', key], value);
+    await kv.set(["storage", key], value);
     await kv.close();
     return Promise.resolve();
   },
   async removeItem(key: string) {
     const kv = await Deno.openKv();
-    await kv.delete(['storage', key]);
+    await kv.delete(["storage", key]);
     await kv.close();
     return Promise.resolve();
   },
