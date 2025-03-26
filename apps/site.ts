@@ -3,6 +3,7 @@ import manifest, { Manifest } from "../manifest.gen.ts";
 
 // deno-lint-ignore no-empty-interface
 interface Props {}
+
 /**
  * @title Site
  * @description Start your site from a template or from scratch.
