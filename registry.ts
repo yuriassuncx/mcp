@@ -4,17 +4,19 @@ import { installStorage } from "site/apps/site.ts";
 import manifest, { Manifest } from "site/manifest.gen.ts";
 import { mcpServer } from "@deco/mcp";
 
+export interface MCPInstance {
+  deco: Deco<Manifest>;
+  server: ReturnType<typeof mcpServer<Manifest>>;
+}
 const contexts: Record<
   string,
-  Promise<
-    { deco: Deco<Manifest>; server: ReturnType<typeof mcpServer<Manifest>> }
-  >
+  Promise<MCPInstance>
 > = {};
 
 export const decoInstance = async (
   installId?: string,
   appName?: string,
-): Promise<Deco<Manifest> | undefined> => {
+): Promise<MCPInstance | undefined> => {
   let decofile: DecoOptions["decofile"] | undefined = undefined;
   if (!installId) {
     installId = "default";

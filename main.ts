@@ -13,8 +13,8 @@ app.use("/apps/:appName/:installId/*", async (ctx, next) => {
   if (!instance) {
     return ctx.notFound();
   }
-  const run = Context.bind(instance.deco, async () => {
-    return ctx.res = await instance.server(ctx, next);
+  const run = Context.bind(instance.deco.ctx, async () => {
+    return await instance.server(ctx, next);
   });
   return run();
 });

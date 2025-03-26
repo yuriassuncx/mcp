@@ -10,7 +10,7 @@ export interface Storage {
 export interface State {
   installStorage: Storage;
 }
-export interface Props { }
+export interface Props {}
 export const installStorage: Storage = {
   async getItem<T>(key: string) {
     const kv = await Deno.openKv();

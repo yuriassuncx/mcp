@@ -1,4 +1,6 @@
+import { MCP } from "site/loaders/mcps/list.ts";
 import { AppContext } from "../../apps/site.ts";
+
 export interface Props {
   /**
    * @description The name of the MCP to install
@@ -34,8 +36,10 @@ export default async function installMCP(
   _req: Request,
   ctx: AppContext,
 ): Promise<InstallURL> {
-  const list: MCP[] = await ctx.invoke.site.loaders.mcps.list();
-  const resolveType = list.find((t: MCP) => t.name === props.name)?.resolveType;
+  const loaders = ctx.invoke.site.loaders;
+  const list: MCP[] = await loaders.mcps.list();
+
+  const resolveType = list.find((t) => t.name === props.name)?.resolveType;
   if (!resolveType) {
     return {
       url: null,
