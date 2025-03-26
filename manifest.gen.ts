@@ -2,15 +2,17 @@
 // This file SHOULD be checked into source version control.
 // This file is automatically updated during development when running `dev.ts`.
 
+import * as $$$$$$$$$0 from "./actions/mcps/install.ts";
 import * as $$$$$$$$$$$0 from "./apps/deco/vtex.ts";
 import * as $$$$$$$$$$$1 from "./apps/site.ts";
-import * as $$$0 from "./loaders/helloWorld.ts";
-import * as $$$1 from "./loaders/randomNumber.ts";
+import * as $$$0 from "./loaders/mcps/list.ts";
 
 const manifest = {
   "loaders": {
-    "site/loaders/helloWorld.ts": $$$0,
-    "site/loaders/randomNumber.ts": $$$1,
+    "site/loaders/mcps/list.ts": $$$0,
+  },
+  "actions": {
+    "site/actions/mcps/install.ts": $$$$$$$$$0,
   },
   "apps": {
     "site/apps/deco/vtex.ts": $$$$$$$$$$$0,
