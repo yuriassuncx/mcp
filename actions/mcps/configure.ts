@@ -25,11 +25,15 @@ export interface InstallURL {
    * @description The message to display to the user
    */
   message?: string;
+  /**
+   * @description The type of connection to use
+   */
+  connectionType?: "HTTP"
 }
 const envName = Deno.env.get("DECO_ENV_NAME");
 const siteName = Deno.env.get("DECO_SITE_NAME");
 const subdomain = envName ? `${envName}--${siteName}` : siteName;
-const MY_DOMAIN = `wss://${subdomain}.deco.site`;
+const MY_DOMAIN = `https://${subdomain}.deco.site`;
 /**
  * @name CONFIGURE_MCP
  * @description Configure an MCP and returns its url
@@ -48,6 +52,7 @@ export default async function configureMCP(
       url: null,
       success: false,
       message: `MCP ${props.name} not found`,
+      connectionType: "HTTP",
     };
   }
   const installId = crypto.randomUUID();
@@ -56,6 +61,6 @@ export default async function configureMCP(
   });
   return {
     success: true,
-    url: `${MY_DOMAIN}/apps/${props.name}/${installId}/mcp/ws`,
+    url: `${MY_DOMAIN}/apps/${props.name}/${installId}/mcp/messages`,
   };
 }
