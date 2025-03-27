@@ -56,7 +56,12 @@ export const decoInstance = async (
           ? {
             basePath,
           }
-          : undefined,
+          : {
+            include: [
+              "site/loaders/mcps/list.ts",
+              "site/actions/mcps/configure.ts",
+            ],
+          },
       ),
     }));
     contexts.set(installId, instance);
