@@ -38,11 +38,11 @@
     "std/": "https://deno.land/std@0.190.0/",
     "site/": "./",
     "deco/": "https://cdn.jsdelivr.net/gh/deco-cx/deco@1.111.5/",
-    "apps/": "https://cdn.jsdelivr.net/gh/deco-cx/apps@0.65.0/",
+    "apps/": "https://cdn.jsdelivr.net/gh/deco-cx/apps@0.65.1/",
     "@preact/signals": "https://esm.sh/*@preact/signals@1.2.2",
     "@preact/signals-core": "https://esm.sh/*@preact/signals-core@1.5.1",
     "daisyui": "npm:daisyui@4.4.19",
-    "@deco/htmx": "https://denopkg.com/deco-cx/apps@0.65.0/htmx/mod.ts",
+    "@deco/htmx": "https://denopkg.com/deco-cx/apps@0.65.1/htmx/mod.ts",
     "https://esm.sh/*preact-render-to-string@6.3.1": "npm:preact-render-to-string@6.4.2",
     "@deco/dev": "jsr:@deco/dev@1.111.5",
     "@deco/deco": "jsr:@deco/deco@1.111.5"
