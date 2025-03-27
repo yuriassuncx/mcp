@@ -4,6 +4,8 @@ import { installStorage } from "site/apps/site.ts";
 import manifest, { Manifest } from "site/manifest.gen.ts";
 import { mcpServer } from "@deco/mcp";
 import { LRUCache } from "lru-cache";
+import { bindings as HTMX } from "@deco/deco/htmx";
+import { Layout } from "./_app.tsx";
 
 export interface MCPInstance {
   deco: Deco<Manifest>;
@@ -16,9 +18,14 @@ const contexts = new LRUCache<string, Promise<MCPInstance>>({
   updateAgeOnGet: true,
 });
 
+export interface MCPInstanceOptions {
+  bindings?: ReturnType<typeof HTMX<Manifest>>;
+  installId?: string;
+  appName?: string;
+}
+
 export const decoInstance = async (
-  installId?: string,
-  appName?: string,
+  { installId, appName, bindings }: MCPInstanceOptions,
 ): Promise<MCPInstance | undefined> => {
   let decofile: DecoOptions["decofile"] | undefined = undefined;
   if (!installId) {
@@ -40,6 +47,7 @@ export const decoInstance = async (
     instance = Deco.init<Manifest>({
       manifest,
       decofile,
+      bindings,
     }).then((deco) => ({
       deco,
       server: mcpServer<Manifest>(
@@ -56,5 +64,8 @@ export const decoInstance = async (
 
   return instance;
 };
-export const { deco: MCP_REGISTRY, server: MCP_SERVER } =
-  (await decoInstance())!;
+export const { deco: MCP_REGISTRY, server: MCP_SERVER } = (await decoInstance({
+  bindings: HTMX({
+    Layout,
+  }),
+}))!;

@@ -1,5 +1,5 @@
-// deno-lint-ignore-file no-empty-interface
 import { type App, type AppContext as AC } from "@deco/deco";
+import { default as website, Props as WebsiteProps } from "apps/website/mod.ts";
 import manifest, { Manifest } from "../manifest.gen.ts";
 
 export interface Storage {
@@ -10,7 +10,6 @@ export interface Storage {
 export interface State {
   installStorage: Storage;
 }
-export interface Props {}
 export const installStorage: Storage = {
   async getItem<T>(key: string) {
     const kv = await Deno.openKv();
@@ -38,13 +37,13 @@ export const installStorage: Storage = {
  * @category Tool
  * @logo https://ozksgdmyrqcxcwhnbepg.supabase.co/storage/v1/object/public/assets/1/0ac02239-61e6-4289-8a36-e78c0975bcc8
  */
-export default function Site(_state: Props): App<Manifest, State> {
+export default function Site(props: WebsiteProps): App<Manifest, State> {
   return {
     state: {
       installStorage,
     },
     manifest,
-    dependencies: [],
+    dependencies: [website(props)],
   };
 }
 export type SiteApp = ReturnType<typeof Site>;

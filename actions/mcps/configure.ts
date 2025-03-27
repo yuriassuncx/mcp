@@ -28,7 +28,7 @@ export interface InstallURL {
   /**
    * @description The type of connection to use
    */
-  connectionType?: "HTTP"
+  connectionType?: "HTTP";
 }
 const envName = Deno.env.get("DECO_ENV_NAME");
 const siteName = Deno.env.get("DECO_SITE_NAME");

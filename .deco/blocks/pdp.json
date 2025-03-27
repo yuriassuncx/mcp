@@ -1,0 +1,14 @@
+{
+  "name": "Configure Page",
+  "sections": [
+    {
+      "name": {
+        "param": "app",
+        "__resolveType": "website/functions/requestToParam.ts"
+      },
+      "__resolveType": "site/sections/PDP.tsx"
+    }
+  ],
+  "__resolveType": "website/pages/Page.tsx",
+  "path": "/mcp/:app"
+}

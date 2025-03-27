@@ -1,0 +1,10 @@
+{
+  "name": "Home Page",
+  "sections": [
+    {
+      "__resolveType": "site/sections/Home.tsx"
+    }
+  ],
+  "__resolveType": "website/pages/Page.tsx",
+  "path": "/"
+}

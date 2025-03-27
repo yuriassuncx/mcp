@@ -3,20 +3,34 @@
 // This file is automatically updated during development when running `dev.ts`.
 
 import * as $$$$$$$$$0 from "./actions/mcps/configure.ts";
-import * as $$$$$$$$$$$0 from "./apps/deco/vtex.ts";
-import * as $$$$$$$$$$$1 from "./apps/site.ts";
+import * as $$$$$$$$$$$0 from "./apps/deco/htmx.ts";
+import * as $$$$$$$$$$$1 from "./apps/deco/resend.ts";
+import * as $$$$$$$$$$$2 from "./apps/deco/vtex.ts";
+import * as $$$$$$$$$$$3 from "./apps/site.ts";
 import * as $$$0 from "./loaders/mcps/list.ts";
+import * as $$$$$$0 from "./sections/Component.tsx";
+import * as $$$$$$1 from "./sections/Home.tsx";
+import * as $$$$$$2 from "./sections/PDP.tsx";
+import * as $$$$$$3 from "./sections/PDPResults.tsx";
 
 const manifest = {
   "loaders": {
     "site/loaders/mcps/list.ts": $$$0,
   },
+  "sections": {
+    "site/sections/Component.tsx": $$$$$$0,
+    "site/sections/Home.tsx": $$$$$$1,
+    "site/sections/PDP.tsx": $$$$$$2,
+    "site/sections/PDPResults.tsx": $$$$$$3,
+  },
   "actions": {
     "site/actions/mcps/configure.ts": $$$$$$$$$0,
   },
   "apps": {
-    "site/apps/deco/vtex.ts": $$$$$$$$$$$0,
-    "site/apps/site.ts": $$$$$$$$$$$1,
+    "site/apps/deco/htmx.ts": $$$$$$$$$$$0,
+    "site/apps/deco/resend.ts": $$$$$$$$$$$1,
+    "site/apps/deco/vtex.ts": $$$$$$$$$$$2,
+    "site/apps/site.ts": $$$$$$$$$$$3,
   },
   "name": "site",
   "baseUrl": import.meta.url,
