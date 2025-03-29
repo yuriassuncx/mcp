@@ -1,11 +1,16 @@
 import { MCP } from "site/loaders/mcps/list.ts";
-import { AppContext } from "../../apps/site.ts";
+import { installStorage } from "../../apps/site.ts";
+import { default as listMCPs } from "../../loaders/mcps/list.ts";
 
 export interface Props {
   /**
    * @description The name of the MCP to install
    */
   name: string;
+  /**
+   * @description ID of the install, its optional, if passed, will update the existing install
+   */
+  installId?: string;
   /**
    * @description The properties to pass to the MCP
    */
@@ -14,7 +19,7 @@ export interface Props {
 
 export interface InstallURL {
   /**
-   * @descriptionThe URL to connect to the installed MCP
+   * @description The URL to connect to the installed MCP
    */
   url: string | null;
   /**
@@ -40,11 +45,8 @@ const MY_DOMAIN = `https://${subdomain}.deco.site`;
  */
 export default async function configureMCP(
   props: Props,
-  _req: Request,
-  ctx: AppContext,
 ): Promise<InstallURL> {
-  const loaders = ctx.invoke.site.loaders;
-  const list: MCP[] = await loaders.mcps.list();
+  const list: MCP[] = await listMCPs();
 
   const resolveType = list.find((t) => t.name === props.name)?.resolveType;
   if (!resolveType) {
@@ -55,12 +57,13 @@ export default async function configureMCP(
       connectionType: "HTTP",
     };
   }
-  const installId = crypto.randomUUID();
-  await ctx.installStorage.setItem(installId, {
+  const installId = props.installId ?? crypto.randomUUID();
+  await installStorage.setItem(installId, {
     [props.name]: { ...props.props, __resolveType: resolveType },
   });
   return {
     success: true,
     url: `${MY_DOMAIN}/apps/${props.name}/${installId}/mcp/messages`,
+    connectionType: "HTTP",
   };
 }

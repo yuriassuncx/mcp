@@ -2,7 +2,8 @@
 // This file SHOULD be checked into source version control.
 // This file is automatically updated during development when running `dev.ts`.
 
-import * as $$$$$$$$$0 from "./actions/mcps/configure.ts";
+import * as $$$$$$$$$0 from "./actions/mcps/check.ts";
+import * as $$$$$$$$$1 from "./actions/mcps/configure.ts";
 import * as $$$$$$$$$$$0 from "./apps/deco/htmx.ts";
 import * as $$$$$$$$$$$1 from "./apps/deco/resend.ts";
 import * as $$$$$$$$$$$2 from "./apps/deco/slack.ts";
@@ -26,7 +27,8 @@ const manifest = {
     "site/sections/PDPResults.tsx": $$$$$$3,
   },
   "actions": {
-    "site/actions/mcps/configure.ts": $$$$$$$$$0,
+    "site/actions/mcps/check.ts": $$$$$$$$$0,
+    "site/actions/mcps/configure.ts": $$$$$$$$$1,
   },
   "apps": {
     "site/apps/deco/htmx.ts": $$$$$$$$$$$0,

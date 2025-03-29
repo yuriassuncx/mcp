@@ -6,6 +6,7 @@ import { mcpServer } from "@deco/mcp";
 import { LRUCache } from "lru-cache";
 import { bindings as HTMX } from "@deco/deco/htmx";
 import { Layout } from "./_app.tsx";
+import { middlewaresFor } from "site/middleware.ts";
 
 export interface MCPInstance {
   deco: Deco<Manifest>;
@@ -54,12 +55,14 @@ export const decoInstance = async (
         deco,
         appName && installId
           ? {
+            middlewares: middlewaresFor({ appName, installId }),
             basePath,
           }
           : {
             include: [
               "site/loaders/mcps/list.ts",
               "site/actions/mcps/configure.ts",
+              "site/actions/mcps/check.ts",
             ],
           },
       ),
@@ -69,6 +72,11 @@ export const decoInstance = async (
 
   return instance;
 };
+
+export const cleanInstance = (installId: string) => {
+  contexts.delete(installId);
+};
+
 export const { deco: MCP_REGISTRY, server: MCP_SERVER } = (await decoInstance({
   bindings: HTMX({
     Layout,

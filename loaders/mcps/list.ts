@@ -1,9 +1,10 @@
-import { getTools, Tool } from "@deco/mcp";
 import { MCP_REGISTRY } from "site/registry.ts";
+import { getTools, Tool } from "@deco/mcp";
 
 export interface MCP extends Tool {
   resolveType: string;
 }
+
 /**
  * @name LIST_AVAILABLE_MCPS
  * @description List all available MCPs

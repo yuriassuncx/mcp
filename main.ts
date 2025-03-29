@@ -1,4 +1,3 @@
-import "deco/runtime/htmx/FreshHeadCompat.ts";
 import { Hono } from "@hono/hono";
 import { decoInstance, MCP_REGISTRY, MCP_SERVER } from "site/registry.ts";
 import { Context } from "@deco/deco";

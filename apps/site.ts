@@ -1,6 +1,7 @@
 import { type App, type AppContext as AC } from "@deco/deco";
 import { default as website, Props as WebsiteProps } from "apps/website/mod.ts";
 import manifest, { Manifest } from "../manifest.gen.ts";
+import { cleanInstance } from "../registry.ts";
 
 export interface Storage {
   getItem<T = unknown>(key: string): Promise<T | null>;
@@ -21,12 +22,16 @@ export const installStorage: Storage = {
     const kv = await Deno.openKv();
     await kv.set(["storage", key], value);
     await kv.close();
+    cleanInstance(key);
+
     return Promise.resolve();
   },
   async removeItem(key: string) {
     const kv = await Deno.openKv();
     await kv.delete(["storage", key]);
     await kv.close();
+    cleanInstance(key);
+
     return Promise.resolve();
   },
 };
