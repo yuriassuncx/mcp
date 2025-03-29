@@ -1,6 +1,9 @@
+// deno-lint-ignore-file no-explicit-any
+import Ajv from "ajv";
 import { installStorage } from "../../apps/site.ts";
-import { Validator } from "jsonschema";
 import { default as listMCPs } from "../../loaders/mcps/list.ts";
+
+const ajv = new Ajv.Ajv({ strict: false });
 
 export interface Props {
   /**
@@ -34,7 +37,6 @@ export default async function checkConfiguration(
     };
   }
 
-  // deno-lint-ignore no-explicit-any
   const config = await installStorage.getItem<Record<string, any>>(installId);
   if (!config) {
     return { success: false, errors: ["Install not found"] };
@@ -46,11 +48,11 @@ export default async function checkConfiguration(
   if (!schema) {
     return { success: false, errors: ["MCP not found"] };
   }
-  const v = new Validator();
+  const validate = ajv.compile(schema);
+
   const { __resolveType: _, ...configData } = config[name];
-  const result = v.validate(configData, schema);
   return {
-    success: result.valid,
-    errors: result.errors.map((e) => e.message),
+    success: validate(configData),
+    errors: validate.errors?.map((e) => e.message ?? e.keyword) ?? [],
   };
 }

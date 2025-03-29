@@ -37,6 +37,7 @@ export const installStorage: Storage = {
 };
 /**
  * @name main
+ * @internal true
  * @title Site
  * @description Start your site from a template or from scratch.
  * @category Tool

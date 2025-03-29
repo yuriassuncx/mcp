@@ -13,7 +13,5 @@ export default async function listMCPs(): Promise<MCP[]> {
   const names = new Map<string, string>();
   const schemas = await MCP_REGISTRY?.meta();
   const tools = getTools(names, schemas?.value.schema, { blocks: ["apps"] });
-  return tools.filter((t) =>
-    t.name !== "main" && t.name !== "site-apps-deco-htmx-ts"
-  ) as MCP[];
+  return tools.filter((t) => t.name !== "site-apps-deco-htmx-ts") as MCP[];
 }
