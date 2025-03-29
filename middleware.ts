@@ -62,6 +62,8 @@ export const middlewaresFor = (
             properties: {
               success: { type: "boolean" },
               errors: { type: "array", items: { type: "string" } },
+              inputSchema: { type: "object" },
+              schema: { type: "object" },
             },
           },
         } as Tool, {

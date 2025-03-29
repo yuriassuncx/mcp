@@ -25,6 +25,10 @@ export interface CheckResult {
    * @description The JSON Schema of the MCP configuration
    */
   inputSchema?: any;
+  /**
+   * @description Configuration of the MCP
+   */
+  config?: any;
 }
 /**
  * @name CHECK_MCP_CONFIGURATION
@@ -59,5 +63,6 @@ export default async function checkConfiguration(
     success: validate(configData),
     errors: validate.errors?.map((e) => e.message ?? e.keyword) ?? [],
     inputSchema: schema,
+    config: configData, // this should be masked.
   };
 }
