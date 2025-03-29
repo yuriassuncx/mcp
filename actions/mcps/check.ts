@@ -21,6 +21,10 @@ export interface CheckResult {
    * @description Whether the installation was successful
    */
   success: boolean;
+  /**
+   * @description The JSON Schema of the MCP configuration
+   */
+  inputSchema?: any;
 }
 /**
  * @name CHECK_MCP_CONFIGURATION
@@ -54,5 +58,6 @@ export default async function checkConfiguration(
   return {
     success: validate(configData),
     errors: validate.errors?.map((e) => e.message ?? e.keyword) ?? [],
+    inputSchema: schema,
   };
 }

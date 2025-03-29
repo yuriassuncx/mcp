@@ -52,7 +52,7 @@ export const middlewaresFor = (
         tools: [...tools, {
           name: checkConfigurationTool,
           description:
-            "Check if the configuration is valid, no input is needed, you should ensure first (once) if the configuration is valid before calling any tool, once checked, you can freely call tools.",
+            "Check if the configuration is valid, no input is needed, you should ensure first (once) if the configuration is valid before calling any tool, once checked, you can freely call tools. It also returns the JSON Schema of the configuration.",
           inputSchema: {
             type: "object",
           },
