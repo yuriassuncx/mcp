@@ -28,6 +28,20 @@ app.use("/*", (ctx, next) => {
   return run();
 });
 
-app.use("/*", async (ctx) => ctx.res = await MCP_REGISTRY.fetch(ctx.req.raw));
+app.use("/*", async (ctx) => {
+  const installId = new URL(ctx.req.url).searchParams.get("installId");
+  const appName = new URL(ctx.req.url).searchParams.get("appName");
+  if (installId && appName) {
+    const instance = await decoInstance({
+      installId,
+      appName,
+    });
+    if (!instance) {
+      return ctx.res = await ctx.notFound();
+    }
+    return instance.deco.fetch(ctx.req.raw);
+  }
+  return ctx.res = await MCP_REGISTRY.fetch(ctx.req.raw);
+});
 
 Deno.serve({ handler: app.fetch, port: envPort ? +envPort : 8000 });
