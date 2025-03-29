@@ -39,7 +39,10 @@ app.use("/*", async (ctx) => {
     if (!instance) {
       return ctx.res = await ctx.notFound();
     }
-    return instance.deco.fetch(ctx.req.raw);
+    const run = Context.bind(instance.deco.ctx, async () => {
+      return await instance.deco.fetch(ctx.req.raw);
+    });
+    return run();
   }
   return ctx.res = await MCP_REGISTRY.fetch(ctx.req.raw);
 });
