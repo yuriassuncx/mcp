@@ -28,7 +28,7 @@ export const middlewaresFor = (
                 await configure({
                   name: appName,
                   installId,
-                  props: req.params.arguments,
+                  props: req.params.arguments!,
                 }),
               ),
             }],
@@ -56,6 +56,7 @@ export const middlewaresFor = (
           inputSchema: {
             type: "object",
           },
+          resolveType: checkConfigurationTool,
           outputSchema: {
             type: "object",
             properties: {
