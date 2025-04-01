@@ -12,6 +12,8 @@ import * as $$$$$$$$$$$4 from "./apps/deco/vertex.ts";
 import * as $$$$$$$$$$$5 from "./apps/deco/vtex.ts";
 import * as $$$$$$$$$$$6 from "./apps/site.ts";
 import * as $$$0 from "./loaders/mcps/list.ts";
+import * as $$$0 from "./loaders/mcps/get.ts";
+import * as $$$1 from "./loaders/mcps/search.ts";
 import * as $$$$$$0 from "./sections/Component.tsx";
 import * as $$$$$$1 from "./sections/Home.tsx";
 import * as $$$$$$2 from "./sections/PDP.tsx";
@@ -19,7 +21,8 @@ import * as $$$$$$3 from "./sections/PDPResults.tsx";
 
 const manifest = {
   "loaders": {
-    "site/loaders/mcps/list.ts": $$$0,
+    "site/loaders/mcps/get.ts": $$$0,
+    "site/loaders/mcps/search.ts": $$$1,
   },
   "sections": {
     "site/sections/Component.tsx": $$$$$$0,

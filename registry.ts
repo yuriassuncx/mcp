@@ -60,7 +60,8 @@ export const decoInstance = async (
           }
           : {
             include: [
-              "site/loaders/mcps/list.ts",
+              "site/loaders/mcps/get.ts",
+              "site/loaders/mcps/search.ts",
               "site/actions/mcps/configure.ts",
               "site/actions/mcps/check.ts",
             ],

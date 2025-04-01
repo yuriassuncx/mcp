@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import Ajv from "ajv";
 import { installStorage } from "../../apps/site.ts";
-import { default as listMCPs } from "../../loaders/mcps/list.ts";
+import getMCP from "../../loaders/mcps/get.ts";
 
 const ajv = new Ajv.Ajv({ strict: false });
 
@@ -31,8 +31,8 @@ export interface CheckResult {
   config?: any;
 }
 /**
- * @name CHECK_MCP_CONFIGURATION
- * @description Check the configuration of an MCP if any error occurs so CONFIGURE_MCP should be used
+ * @name CONFIGURATION_CHECK
+ * @description Check the configuration of an MCP if any error occurs so CONFIGURE should be used
  */
 export default async function checkConfiguration(
   props: Props,
@@ -49,10 +49,8 @@ export default async function checkConfiguration(
   if (!config) {
     return { success: false, errors: ["Install not found"] };
   }
-  const name = Object.keys(config)[0];
-  const schema = await listMCPs().then((list) =>
-    list.find((t) => t.name === name)?.inputSchema
-  );
+  const id = Object.keys(config)[0];
+  const schema = await getMCP({ id });
   if (!schema) {
     return { success: false, errors: ["MCP not found"] };
   }
