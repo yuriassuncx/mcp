@@ -29,6 +29,7 @@ export const decoInstance = async (
   { installId, appName, bindings }: MCPInstanceOptions,
 ): Promise<MCPInstance | undefined> => {
   let decofile: DecoOptions["decofile"] | undefined = undefined;
+
   if (!installId) {
     installId = "default";
   } else {
@@ -79,7 +80,5 @@ export const cleanInstance = (installId: string) => {
 };
 
 export const { deco: MCP_REGISTRY, server: MCP_SERVER } = (await decoInstance({
-  bindings: HTMX({
-    Layout,
-  }),
+  bindings: HTMX({ Layout }),
 }))!;

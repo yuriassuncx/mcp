@@ -7,8 +7,9 @@ export interface MiddlewareOptions {
   appName: string;
   installId: string;
 }
-const CHECK_CONFIGURATION_TOOL = "CHECK_MCP_CONFIGURATION";
-const CONFIGURE_MCP_TOOL = "CONFIGURE_MCP";
+const CHECK_CONFIGURATION_TOOL = "CONFIGURATION_CHECK";
+const CONFIGURE_MCP_TOOL = "CONFIGURE";
+
 export const middlewaresFor = (
   { appName, installId }: MiddlewareOptions,
 ): {
@@ -17,6 +18,7 @@ export const middlewaresFor = (
 } => {
   const checkConfigurationTool = `${appName}_${CHECK_CONFIGURATION_TOOL}`;
   const configureMcpTool = `${appName}_${CONFIGURE_MCP_TOOL}`;
+
   return {
     callTool: [
       async (req, next) => {
