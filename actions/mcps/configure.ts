@@ -77,28 +77,28 @@ const configureDeco = async (
     };
   }
 
-  await installStorage.setItem(installId, {
+  const url = `${MY_DOMAIN}/apps/${id}/${installId}/mcp/messages`;
+
+  await installStorage.setItem(url, {
     [id]: { ...config, __resolveType: resolveType },
   });
 
   return {
     success: true,
-    connection: {
-      url: `${MY_DOMAIN}/apps/${id}/${installId}/mcp/messages`,
-      type: "HTTP",
-    },
+    connection: { url, type: "HTTP" },
   };
 };
 
-const configureComposio = async (integration: ComposioMCP) => {
-  const instanceId = await install(integration.id);
+const configureComposio = async ({ id }: ComposioMCP) => {
+  const url = await install(id);
+
+  await installStorage.setItem(url, {
+    [id]: { type: "object", additionalProperties: true },
+  });
 
   return {
     success: true,
-    connection: {
-      url: instanceId,
-      type: "SSE",
-    },
+    connection: { url, type: "SSE" },
   };
 };
 
@@ -121,7 +121,7 @@ export default async function configureMCP(
 
   const { success, connection } = integration.provider === "composio"
     ? await configureComposio(integration)
-    : await configureDeco(integration, props);
+    : await configureDeco(integration, props.props);
 
   return {
     success,

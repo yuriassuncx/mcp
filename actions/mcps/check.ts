@@ -9,7 +9,7 @@ export interface Props {
   /**
    * @description ID of the install, its optional, if passed, will update the existing install
    */
-  installId: string;
+  installUrl: string;
 }
 
 export interface CheckResult {
@@ -37,26 +37,28 @@ export interface CheckResult {
 export default async function checkConfiguration(
   props: Props,
 ): Promise<CheckResult> {
-  const installId = props.installId;
-  if (!installId) {
+  const installUrl = props.installUrl;
+  if (!installUrl) {
     return {
       success: false,
-      errors: ["Install ID is required"],
+      errors: ["Install URL is required"],
     };
   }
 
-  const config = await installStorage.getItem<Record<string, any>>(installId);
+  const config = await installStorage.getItem<Record<string, any>>(installUrl);
   if (!config) {
     return { success: false, errors: ["Install not found"] };
   }
-  const id = Object.keys(config)[0];
-  const schema = await getMCP({ id });
-  if (!schema) {
+  const integrationId = Object.keys(config)[0];
+  const integration = await getMCP({ id: integrationId });
+  if (!integration) {
     return { success: false, errors: ["MCP not found"] };
   }
+
+  const schema = integration.inputSchema;
   const validate = ajv.compile(schema);
 
-  const { __resolveType: _, ...configData } = config[name];
+  const { __resolveType: _, ...configData } = config[integrationId];
   return {
     success: validate(configData),
     errors: validate.errors?.map((e) => e.message ?? e.keyword) ?? [],

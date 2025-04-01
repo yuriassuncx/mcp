@@ -41,8 +41,6 @@ export const action = async (
       props: JSON.parse(config as any as string),
     });
 
-    console.log({ result });
-
     return { ...props, instalation: result };
   } catch (err) {
     return { ...props, error: err.message };
@@ -94,19 +92,22 @@ export default function PDP({ mcp, error, instalation }: Props) {
           enableSchemaRequest: false,
         });
 
-        globalThis.monacoEditor = globalThis.monaco.editor.create(editorElement, {
-          value: "{}",
-          language: "json",
-          theme: "vs",
-          automaticLayout: true,
-          minimap: { enabled: false },
-          scrollBeyondLastLine: false,
-          lineNumbers: "on",
-          roundedSelection: false,
-          formatOnPaste: true,
-          formatOnType: true,
-          wordWrap: "on",
-        });
+        globalThis.monacoEditor = globalThis.monaco.editor.create(
+          editorElement,
+          {
+            value: "{}",
+            language: "json",
+            theme: "vs",
+            automaticLayout: true,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            lineNumbers: "on",
+            roundedSelection: false,
+            formatOnPaste: true,
+            formatOnType: true,
+            wordWrap: "on",
+          },
+        );
 
         // Add validation error listener
         globalThis.monacoEditor.onDidChangeModelDecorations(function () {
@@ -132,7 +133,8 @@ export default function PDP({ mcp, error, instalation }: Props) {
         });
 
         if (globalThis.monacoEditor.getAction("editor.action.formatDocument")) {
-          globalThis.monacoEditor.getAction("editor.action.formatDocument").run();
+          globalThis.monacoEditor.getAction("editor.action.formatDocument")
+            .run();
         }
       } catch (err) {
         console.error("Monaco initialization error:", err);
@@ -201,7 +203,6 @@ export default function PDP({ mcp, error, instalation }: Props) {
           if (s) s.innerHTML = result;
         })
         .catch(function (err) {
-          console.log({ err });
           console.error("Submit error:", err);
           if (errorElement) {
             errorElement.textContent = "Failed to submit: " + err.message;
@@ -275,7 +276,10 @@ export default function PDP({ mcp, error, instalation }: Props) {
               style={{ display: "none" }}
             />
           </div>
-          <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+          <button
+            type="submit"
+            class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
+          >
             <span class="[.htmx-request_&]:hidden inline">Install</span>
             <span class="[.htmx-request_&]:inline hidden loading loading-spinner loading-sm" />
           </button>
