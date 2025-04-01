@@ -83,8 +83,6 @@ const configureDeco = async (
 
   const url = new URL(`/apps/${id}/${installId}/mcp/messages`, MY_DOMAIN);
 
-  console.log({ url, installId, config });
-
   await installStorage.setItem(installId, {
     [id]: { ...config, __resolveType: resolveType },
   });

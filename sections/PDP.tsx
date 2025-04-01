@@ -53,7 +53,7 @@ export default function PDP({ mcp, error, instalation }: Props) {
   const schemaId = useId();
   const errorId = useId();
 
-  const setupMonaco = function (editorId, schemaId, errorId) {
+  function setupMonaco(editorId, schemaId, errorId) {
     function waitForRequire() {
       if (!globalThis.require) {
         setTimeout(waitForRequire, 100);
@@ -147,9 +147,9 @@ export default function PDP({ mcp, error, instalation }: Props) {
     }
 
     waitForRequire();
-  };
+  }
 
-  const handleSubmit = (slot) => {
+  function handleSubmit(slot) {
     event.preventDefault();
 
     const editor = globalThis.monacoEditor;
@@ -216,7 +216,7 @@ export default function PDP({ mcp, error, instalation }: Props) {
         errorElement.style.display = "block";
       }
     }
-  };
+  }
 
   const handleSetup = useScript(setupMonaco, editorId, schemaId, errorId);
   const handleClick = useScript(handleSubmit, slot);
