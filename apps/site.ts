@@ -45,9 +45,7 @@ export const installStorage: Storage = {
  */
 export default function Site(props: WebsiteProps): App<Manifest, State> {
   return {
-    state: {
-      installStorage,
-    },
+    state: { installStorage },
     manifest,
     dependencies: [website(props)],
   };

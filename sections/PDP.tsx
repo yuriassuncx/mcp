@@ -1,37 +1,28 @@
-import { InstallURL } from "../actions/mcps/configure.ts";
+import { type ConfigurationResult } from "../actions/mcps/configure.ts";
 import { AppContext } from "../apps/site.ts";
-import { MCP } from "../loaders/mcps/list.ts";
+import { type MCP } from "../loaders/mcps/search.ts";
 import { useId } from "site/sdk/useId.ts";
 import { useScript } from "@deco/deco/hooks";
 
 export interface Props {
-  name?: string;
+  id?: string;
   mcp?: MCP;
-  installURL?: InstallURL;
+  installation?: ConfigurationResult;
   error?: string;
 }
 
-export const loader = async (
-  props: Props,
-  req: Request,
-  ctx: AppContext,
-) => {
-  const url = new URL(req.url);
-  const name = url.pathname.split("/").pop() || props.name;
-
-  if (!name) {
-    return { ...props, error: "MCP name not provided" };
+export const loader = async (props: Props, _req: Request, ctx: AppContext) => {
+  if (!props.id) {
+    return { ...props, error: "MCP id not provided" };
   }
 
-  // @ts-ignore: TODO: fix this
-  const mcps = await ctx.invoke.site.loaders.mcps.list();
-  const mcp = mcps.find((m: MCP) => m.name === name);
+  const mcp = await ctx.invoke.site.loaders.mcps.get({ id: props.id });
 
   if (!mcp) {
     return { ...props, error: "MCP not found" };
   }
 
-  return { ...props, name, mcp };
+  return { ...props, mcp };
 };
 
 export const action = async (
@@ -44,173 +35,191 @@ export const action = async (
     const formProps = Object.fromEntries(form.entries());
     const config = formProps.config;
 
-    const installURL = await ctx.invoke.site.actions.mcps.configure({
-      name: props.name!,
+    const result = await ctx.invoke.site.actions.mcps.configure({
+      id: props.id!,
       // deno-lint-ignore no-explicit-any
       props: JSON.parse(config as any as string),
     });
 
-    return { ...props, installURL };
+    return { ...props, instalation: result };
   } catch (err) {
     return { ...props, error: err.message };
   }
 };
 
-export default function PDP({ mcp, error, installURL }: Props) {
+export default function PDP({ mcp, error, instalation }: Props) {
   const slot = useId();
   const editorId = useId();
   const schemaId = useId();
   const errorId = useId();
 
-  const setupMonaco = () => `
-!function() {
-  function waitForRequire() {
-    if (!window.require) {
-      setTimeout(waitForRequire, 100)
-      return
+  const setupMonaco = function (editorId, schemaId, errorId) {
+    function waitForRequire() {
+      if (!globalThis.require) {
+        setTimeout(waitForRequire, 100);
+        return;
+      }
+      globalThis.require.config({
+        paths: {
+          vs:
+            "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs",
+        },
+      });
+      globalThis.require(["vs/editor/editor.main"], setupEditor);
     }
-    window.require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs' }})
-    window.require(['vs/editor/editor.main'], setupEditor)
-  }
 
-  function setupEditor() {
-    var editorElement = document.getElementById('${editorId}')
-    var schemaElement = document.getElementById('${schemaId}')
-    var errorElement = document.getElementById('${errorId}')
-    
-    if (!editorElement || !schemaElement) {
-      console.error('Required elements not found')
-      return
+    function setupEditor() {
+      const editorElement = document.getElementById(editorId);
+      const schemaElement = document.getElementById(schemaId);
+      const errorElement = document.getElementById(errorId);
+
+      if (!editorElement || !schemaElement) {
+        console.error("Required elements not found");
+        return;
+      }
+
+      try {
+        const schema = JSON.parse(schemaElement.textContent || "{}");
+
+        globalThis.monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+          validate: true,
+          allowComments: true,
+          schemas: [{
+            uri: "http://myschema/mcp-schema.json",
+            fileMatch: ["*"],
+            schema: schema,
+          }],
+          enableSchemaRequest: false,
+        });
+
+        globalThis.monacoEditor = globalThis.monaco.editor.create(
+          editorElement,
+          {
+            value: "{}",
+            language: "json",
+            theme: "vs",
+            automaticLayout: true,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            lineNumbers: "on",
+            roundedSelection: false,
+            formatOnPaste: true,
+            formatOnType: true,
+            wordWrap: "on",
+          },
+        );
+
+        // Add validation error listener
+        globalThis.monacoEditor.onDidChangeModelDecorations(function () {
+          const model = globalThis.monacoEditor.getModel();
+          if (!model) return;
+
+          const errorMarkers = globalThis.monaco.editor.getModelMarkers({
+            resource: model.uri,
+          });
+          if (errorMarkers.length > 0) {
+            const errors = errorMarkers.map(function (marker) {
+              return marker.message;
+            }).join("\\n");
+            if (errorElement) {
+              errorElement.textContent = errors;
+              errorElement.style.display = "block";
+            }
+          } else {
+            if (errorElement) {
+              errorElement.style.display = "none";
+            }
+          }
+        });
+
+        if (globalThis.monacoEditor.getAction("editor.action.formatDocument")) {
+          globalThis.monacoEditor.getAction("editor.action.formatDocument")
+            .run();
+        }
+      } catch (err) {
+        console.error("Monaco initialization error:", err);
+        if (errorElement) {
+          errorElement.textContent = "Failed to initialize editor: " +
+            err.message;
+          errorElement.style.display = "block";
+        }
+      }
+    }
+
+    waitForRequire();
+  };
+
+  const handleSubmit = (slot) => {
+    event.preventDefault();
+
+    const editor = globalThis.monacoEditor;
+    const errorElement = document.getElementById("${errorId}");
+
+    if (!editor) {
+      console.error("Editor not initialized");
+      if (errorElement) {
+        errorElement.textContent = "Editor not initialized";
+        errorElement.style.display = "block";
+      }
+      return;
     }
 
     try {
-      var schema = JSON.parse(schemaElement.textContent || '{}')
-      
-      window.monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-        validate: true,
-        allowComments: true,
-        schemas: [{
-          uri: "http://myschema/mcp-schema.json",
-          fileMatch: ["*"],
-          schema: schema
-        }],
-        enableSchemaRequest: false
-      })
+      const jsonInput = editor.getValue() || "{}";
+      const parsedJson = JSON.parse(jsonInput);
 
-      window.monacoEditor = window.monaco.editor.create(editorElement, {
-        value: '{}',
-        language: 'json',
-        theme: 'vs',
-        automaticLayout: true,
-        minimap: { enabled: false },
-        scrollBeyondLastLine: false,
-        lineNumbers: 'on',
-        roundedSelection: false,
-        formatOnPaste: true,
-        formatOnType: true,
-        wordWrap: 'on'
-      })
-
-      // Add validation error listener
-      window.monacoEditor.onDidChangeModelDecorations(function() {
-        var model = window.monacoEditor.getModel()
-        if (!model) return
-
-        var errorMarkers = window.monaco.editor.getModelMarkers({ resource: model.uri })
-        if (errorMarkers.length > 0) {
-          var errors = errorMarkers.map(function(marker) {
-            return marker.message
-          }).join('\\n')
+      // Check for validation errors before submitting
+      const model = editor.getModel();
+      if (model) {
+        const markers = globalThis.monaco.editor.getModelMarkers({
+          resource: model.uri,
+        });
+        if (markers.length > 0) {
           if (errorElement) {
-            errorElement.textContent = errors
-            errorElement.style.display = 'block'
+            errorElement.textContent =
+              "Please fix validation errors before submitting";
+            errorElement.style.display = "block";
           }
-        } else {
-          if (errorElement) {
-            errorElement.style.display = 'none'
-          }
+          return;
         }
-      })
-
-      if (window.monacoEditor.getAction('editor.action.formatDocument')) {
-        window.monacoEditor.getAction('editor.action.formatDocument').run()
       }
+
+      const form = new FormData();
+      form.append("config", JSON.stringify(parsedJson));
+
+      if (errorElement) {
+        errorElement.style.display = "none";
+      }
+
+      fetch(globalThis.location.href, {
+        method: "POST",
+        body: form,
+      })
+        .then(function (response) {
+          return response.text();
+        })
+        .then(function (result) {
+          const s = document.getElementById(slot);
+          if (s) s.innerHTML = result;
+        })
+        .catch(function (err) {
+          console.error("Submit error:", err);
+          if (errorElement) {
+            errorElement.textContent = "Failed to submit: " + err.message;
+            errorElement.style.display = "block";
+          }
+        });
     } catch (err) {
-      console.error('Monaco initialization error:', err)
+      console.error("JSON parse error:", err);
       if (errorElement) {
-        errorElement.textContent = 'Failed to initialize editor: ' + err.message
-        errorElement.style.display = 'block'
+        errorElement.textContent = "Invalid JSON format: " + err.message;
+        errorElement.style.display = "block";
       }
     }
-  }
+  };
 
-  waitForRequire()
-}()`;
-
-  const script = useScript(setupMonaco());
-
-  const handleSubmit = () => `
-!function() {
-  var editor = window.monacoEditor
-  var errorElement = document.getElementById('${errorId}')
-  
-  if (!editor) {
-    console.error('Editor not initialized')
-    if (errorElement) {
-      errorElement.textContent = 'Editor not initialized'
-      errorElement.style.display = 'block'
-    }
-    return
-  }
-  
-  try {
-    var jsonInput = editor.getValue() || '{}'
-    var parsedJson = JSON.parse(jsonInput)
-    
-    // Check for validation errors before submitting
-    var model = editor.getModel()
-    if (model) {
-      var markers = window.monaco.editor.getModelMarkers({ resource: model.uri })
-      if (markers.length > 0) {
-        if (errorElement) {
-          errorElement.textContent = 'Please fix validation errors before submitting'
-          errorElement.style.display = 'block'
-        }
-        return
-      }
-    }
-
-    var form = new FormData()
-    form.append('config', JSON.stringify(parsedJson))
-
-    if (errorElement) {
-      errorElement.style.display = 'none'
-    }
-
-    fetch(window.location.href, {
-      method: 'POST',
-      body: form
-    })
-    .then(function(response) { return response.text() })
-    .then(function(result) {
-      var slot = document.getElementById('${slot}')
-      if (slot) slot.innerHTML = result
-    })
-    .catch(function(err) {
-      console.error('Submit error:', err)
-      if (errorElement) {
-        errorElement.textContent = 'Failed to submit: ' + err.message
-        errorElement.style.display = 'block'
-      }
-    })
-  } catch (err) {
-    console.error('JSON parse error:', err)
-    if (errorElement) {
-      errorElement.textContent = 'Invalid JSON format: ' + err.message
-      errorElement.style.display = 'block'
-    }
-  }
-}()`;
+  const handleSetup = useScript(setupMonaco, editorId, schemaId, errorId);
+  const handleClick = useScript(handleSubmit, slot);
 
   if (error) {
     return (
@@ -222,13 +231,15 @@ export default function PDP({ mcp, error, installURL }: Props) {
     );
   }
 
-  if (installURL?.success) {
+  if (instalation?.success) {
     return (
       <div class="container mx-auto p-4">
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
           <h2 class="text-xl font-bold mb-2">Installation Successful!</h2>
           <p class="mb-4">Your MCP URL:</p>
-          <code class="block bg-green-50 p-4 rounded">{installURL.url}</code>
+          <code class="block bg-green-50 p-4 rounded">
+            {instalation.data.connection.url}
+          </code>
         </div>
       </div>
     );
@@ -245,7 +256,7 @@ export default function PDP({ mcp, error, installURL }: Props) {
 
       <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         <h2 class="text-2xl font-bold mb-6">Configure Installation</h2>
-        <form method="POST">
+        <form method="POST" onsubmit={handleClick}>
           <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2">
               Configuration JSON
@@ -266,8 +277,7 @@ export default function PDP({ mcp, error, installURL }: Props) {
             />
           </div>
           <button
-            type="button"
-            onclick={handleSubmit()}
+            type="submit"
             class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
           >
             <span class="[.htmx-request_&]:hidden inline">Install</span>
@@ -298,7 +308,7 @@ export default function PDP({ mcp, error, installURL }: Props) {
       <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js" />
 
       {/* Initialize Monaco */}
-      <script dangerouslySetInnerHTML={{ __html: script }} />
+      <script dangerouslySetInnerHTML={{ __html: handleSetup }} />
     </div>
   );
 }

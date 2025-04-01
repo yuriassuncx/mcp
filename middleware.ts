@@ -1,7 +1,7 @@
 import { CallToolMiddleware, ListToolsMiddleware, Tool } from "@deco/mcp";
 import checkConfiguration from "site/actions/mcps/check.ts";
 import configure from "site/actions/mcps/configure.ts";
-import listMCPs from "site/loaders/mcps/list.ts";
+import searchMCPs from "site/loaders/mcps/search.ts";
 
 export interface MiddlewareOptions {
   appName: string;
@@ -26,7 +26,7 @@ export const middlewaresFor = (
               type: "text",
               text: JSON.stringify(
                 await configure({
-                  name: appName,
+                  id: appName,
                   installId,
                   props: req.params.arguments!,
                 }),
@@ -46,7 +46,7 @@ export const middlewaresFor = (
       },
     ],
     listTools: [async (_req, next) => {
-      const [{ tools }, apps] = await Promise.all([next!(), listMCPs()]);
+      const [{ tools }, apps] = await Promise.all([next!(), searchMCPs()]);
       const inputSchema = apps.find((app) => app.name === appName)?.inputSchema;
       return {
         tools: [...tools, {
