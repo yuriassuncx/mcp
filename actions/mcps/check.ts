@@ -9,7 +9,7 @@ export interface Props {
   /**
    * @description ID of the install, its optional, if passed, will update the existing install
    */
-  installUrl: string;
+  installId: string;
 }
 
 export interface CheckResult {
@@ -37,15 +37,21 @@ export interface CheckResult {
 export default async function checkConfiguration(
   props: Props,
 ): Promise<CheckResult> {
-  const installUrl = props.installUrl;
-  if (!installUrl) {
+  const installId = props.installId;
+
+  console.log(installId);
+
+  if (!installId) {
     return {
       success: false,
-      errors: ["Install URL is required"],
+      errors: ["Install ID is required"],
     };
   }
 
-  const config = await installStorage.getItem<Record<string, any>>(installUrl);
+  const config = await installStorage.getItem<Record<string, any>>(installId);
+
+  console.log(config);
+
   if (!config) {
     return { success: false, errors: ["Install not found"] };
   }

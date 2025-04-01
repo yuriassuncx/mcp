@@ -6,15 +6,17 @@ const app = new Hono();
 const envPort = Deno.env.get("PORT");
 
 app.use("/apps/:appName/:installId/*", async (ctx, next) => {
-  const instance = await decoInstance(
-    {
-      installId: ctx.req.param("installId"),
-      appName: ctx.req.param("appName"),
-    },
-  );
+  const url = new URL(ctx.req.url);
+
+  const instance = await decoInstance({
+    installId: ctx.req.param("installId"),
+    appName: ctx.req.param("appName"),
+  });
+
   if (!instance) {
     return ctx.notFound();
   }
+
   const run = Context.bind(instance.deco.ctx, async () => {
     return await instance.server(ctx, next);
   });
@@ -32,10 +34,7 @@ app.use("/*", async (ctx) => {
   const installId = new URL(ctx.req.url).searchParams.get("installId");
   const appName = new URL(ctx.req.url).searchParams.get("appName");
   if (installId && appName) {
-    const instance = await decoInstance({
-      installId,
-      appName,
-    });
+    const instance = await decoInstance({ installId, appName });
     if (!instance) {
       return ctx.res = await ctx.notFound();
     }

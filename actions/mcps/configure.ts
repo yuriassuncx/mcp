@@ -30,6 +30,10 @@ export interface ConfigurationResult {
   /**
    * @description The data of the installed MCP
    */
+  /**
+   * @description The id of the install
+   */
+  installId: string;
   data: {
     /**
      * @description The name of the MCP
@@ -63,7 +67,7 @@ const MY_DOMAIN = `https://${subdomain}.deco.site`;
 const configureDeco = async (
   integration: DecoMCP,
   config: Record<string, unknown>,
-  installId?: string = crypto.randomUUID(),
+  installId: string = crypto.randomUUID(),
 ) => {
   const resolveType = integration.resolveType;
   const id = integration.id;
@@ -77,28 +81,35 @@ const configureDeco = async (
     };
   }
 
-  const url = `${MY_DOMAIN}/apps/${id}/${installId}/mcp/messages`;
+  const url = new URL(`/apps/${id}/${installId}/mcp/messages`, MY_DOMAIN);
 
-  await installStorage.setItem(url, {
+  console.log({ url, installId, config });
+
+  await installStorage.setItem(installId, {
     [id]: { ...config, __resolveType: resolveType },
   });
 
   return {
     success: true,
-    connection: { url, type: "HTTP" },
+    installId,
+    connection: { url: url.href, type: "HTTP" },
   };
 };
 
 const configureComposio = async ({ id }: ComposioMCP) => {
-  const url = await install(id);
+  const urlTemplate = await install(id);
 
-  await installStorage.setItem(url, {
+  const url = new URL(urlTemplate);
+  const installId = url.pathname.split("/").pop();
+
+  await installStorage.setItem(installId, {
     [id]: { type: "object", additionalProperties: true },
   });
 
   return {
     success: true,
-    connection: { url, type: "SSE" },
+    installId,
+    connection: { url: url.href, type: "SSE" },
   };
 };
 
@@ -119,12 +130,13 @@ export default async function configureMCP(
     };
   }
 
-  const { success, connection } = integration.provider === "composio"
+  const { success, connection, installId } = integration.provider === "composio"
     ? await configureComposio(integration)
-    : await configureDeco(integration, props.props);
+    : await configureDeco(integration, props.props, props.installId);
 
   return {
     success,
+    installId,
     data: {
       name: integration.name,
       description: integration.description,
