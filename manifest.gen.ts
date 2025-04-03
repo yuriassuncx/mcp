@@ -12,6 +12,7 @@ import * as $$$$$$$$$$$4 from "./apps/deco/tiptap-cloud.ts";
 import * as $$$$$$$$$$$5 from "./apps/deco/vertex.ts";
 import * as $$$$$$$$$$$6 from "./apps/deco/vtex.ts";
 import * as $$$$$$$$$$$7 from "./apps/site.ts";
+import * as $$$$$$$$$$$8 from "./apps/stability.ts";
 import * as $$$0 from "./loaders/mcps/get.ts";
 import * as $$$1 from "./loaders/mcps/search.ts";
 import * as $$$$$$0 from "./sections/Component.tsx";
@@ -43,6 +44,7 @@ const manifest = {
     "site/apps/deco/vertex.ts": $$$$$$$$$$$5,
     "site/apps/deco/vtex.ts": $$$$$$$$$$$6,
     "site/apps/site.ts": $$$$$$$$$$$7,
+    "site/apps/stability.ts": $$$$$$$$$$$8,
   },
   "name": "site",
   "baseUrl": import.meta.url,
