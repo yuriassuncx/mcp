@@ -28,9 +28,9 @@ export type ComposioMCP = {
  *  const imageUrl = bgImage.match(/url\("(.*)"\)/)[1];
  *  const title = node.querySelector('h3').innerText;
  *  const description = node.querySelector('p').innerText;
- *
  *  integrations.push({ id, icon: imageUrl, name: title, description });
  * })
+ * copy(integrations.sort((a,b) => a.id < b.id));
  */
 export const list = (): ComposioMCP[] => {
   return registry.map((integration) => ({
