@@ -1,4 +1,4 @@
-import { MCP_REGISTRY } from "site/registry.ts";
+import { MCP_REGISTRY } from "../../registry.ts";
 import { getTools, Tool } from "@deco/mcp";
 import { list } from "../../sdk/composio/index.ts";
 

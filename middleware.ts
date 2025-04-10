@@ -1,7 +1,7 @@
 import { CallToolMiddleware, ListToolsMiddleware, Tool } from "@deco/mcp";
-import checkConfiguration from "site/actions/mcps/check.ts";
-import configure from "site/actions/mcps/configure.ts";
-import searchMCPs from "site/loaders/mcps/search.ts";
+import checkConfiguration from "./actions/mcps/check.ts";
+import configure from "./actions/mcps/configure.ts";
+import searchMCPs from "./loaders/mcps/search.ts";
 
 export interface MiddlewareOptions {
   appName: string;

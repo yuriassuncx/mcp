@@ -1,12 +1,12 @@
 import { fromJSON } from "@deco/deco/engine";
 import { buildImportMap, Deco, DecoOptions } from "@deco/deco";
-import { installStorage } from "site/apps/site.ts";
-import manifest, { Manifest } from "site/manifest.gen.ts";
+import { installStorage } from "./apps/site.ts";
+import manifest, { Manifest } from "./manifest.gen.ts";
 import { mcpServer } from "@deco/mcp";
 import { LRUCache } from "lru-cache";
 import { bindings as HTMX } from "@deco/deco/htmx";
 import { Layout } from "./_app.tsx";
-import { middlewaresFor } from "site/middleware.ts";
+import { middlewaresFor } from "./middleware.ts";
 import { parseArgs } from "jsr:@std/cli/parse-args";
 import { basename, dirname } from "jsr:@std/path";
 

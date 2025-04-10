@@ -1,5 +1,5 @@
-import { type DecoMCP, MCP } from "site/loaders/mcps/search.ts";
-import { type ComposioMCP, install } from "site/sdk/composio/index.ts";
+import { type DecoMCP, MCP } from "../../loaders/mcps/search.ts";
+import { type ComposioMCP, install } from "../../sdk/composio/index.ts";
 import { installStorage } from "../../apps/site.ts";
 import getMCP from "../../loaders/mcps/get.ts";
 

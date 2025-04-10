@@ -2,7 +2,7 @@
 import { type ConfigurationResult } from "../actions/mcps/configure.ts";
 import { AppContext } from "../apps/site.ts";
 import { type MCP } from "../loaders/mcps/search.ts";
-import { useId } from "site/sdk/useId.ts";
+import { useId } from "../sdk/useId.ts";
 import { useScript } from "@deco/deco/hooks";
 
 export interface Props {
@@ -124,7 +124,7 @@ export default function PDP({ mcp, error, installation }: Props) {
           if (part) result.push(part);
           if (urls[i]) {
             // Clean the URL (remove trailing punctuation)
-            let cleanUrl = urls[i].replace(/[.,;:!?]+$/, "");
+            const cleanUrl = urls[i].replace(/[.,;:!?]+$/, "");
 
             result.push(
               <a

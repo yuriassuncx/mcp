@@ -1,6 +1,6 @@
 import { MCP } from "../loaders/mcps/search.ts";
 import { AppContext } from "../apps/site.ts";
-import { useId } from "site/sdk/useId.ts";
+import { useId } from "../sdk/useId.ts";
 import { useScript } from "@deco/deco/hooks";
 
 export interface Props {

@@ -1,6 +1,6 @@
 import { Context } from "@deco/deco";
 import { Hono } from "@hono/hono";
-import { decoInstance, MCP_REGISTRY } from "site/registry.ts";
+import { decoInstance, MCP_REGISTRY } from "./registry.ts";
 
 const app = new Hono();
 const envPort = Deno.env.get("PORT");

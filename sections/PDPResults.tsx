@@ -1,4 +1,4 @@
-import { InstallURL } from "site/actions/mcps/configure.ts";
+import { InstallURL } from "../actions/mcps/configure.ts";
 import { AppContext } from "../apps/site.ts";
 
 export interface Props {
