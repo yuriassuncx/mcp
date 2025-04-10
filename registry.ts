@@ -20,7 +20,7 @@ if (flags.apps) {
   const appPaths = flags.apps.split(",");
   for (const appPath of appPaths) {
     const appName = basename(dirname(appPath));
-    const appFile = import.meta.resolve(appPath);
+    const appFile = import.meta.resolve(`file://${appPath}`);
     const appMod = await import(appFile);
     const appTsName = `site/apps/deco/${appName}.ts`;
     importMap.imports[appTsName] = appFile;
