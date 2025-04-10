@@ -1,7 +1,8 @@
 import { join } from "jsr:@std/path/posix";
 
-const denoJSONURL = import.meta.resolve(import.meta.dirname + "/deno.json");
-const dotEnvURL = import.meta.resolve(import.meta.dirname + "/.env");
+const dirname = import.meta.url.split("/").slice(0, -1).join("/");
+const denoJSONURL = import.meta.resolve(dirname + "/deno.json");
+const dotEnvURL = import.meta.resolve(dirname + "/.env");
 const denoJSON = await fetch(denoJSONURL).then((res) => res.text());
 const dotEnv = await fetch(dotEnvURL).then((res) => res.text());
 
@@ -10,7 +11,7 @@ const denoJSONPath = join(temp, "deno.json");
 await Deno.writeTextFile(denoJSONPath, denoJSON);
 await Deno.writeTextFile(join(temp, ".env"), dotEnv);
 
-const MAIN = join(import.meta.dirname, "main.ts");
+const MAIN = join(dirname, "main.ts");
 const dotEnvPath = join(temp, ".env");
 
 const runCmd = [
