@@ -19,6 +19,7 @@ if (flags.apps) {
   importMap = buildImportMap(manifest);
   const appPaths = flags.apps.split(",");
   for (const appPath of appPaths) {
+    console.log("[importing]:", appPath);
     const appName = basename(dirname(appPath));
     const appFile = `file://${appPath}`;
     const appMod = await import(appFile);
