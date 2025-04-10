@@ -56,5 +56,5 @@ export default async function loader(
     list.push({ ...item, provider: "composio" });
   }
 
-  return list;
+  return list as MCP[];
 }

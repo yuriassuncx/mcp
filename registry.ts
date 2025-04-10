@@ -1,5 +1,5 @@
 import { fromJSON } from "@deco/deco/engine";
-import { Deco, DecoOptions } from "@deco/deco";
+import { buildImportMap, Deco, DecoOptions } from "@deco/deco";
 import { installStorage } from "site/apps/site.ts";
 import manifest, { Manifest } from "site/manifest.gen.ts";
 import { mcpServer } from "@deco/mcp";
@@ -7,6 +7,27 @@ import { LRUCache } from "lru-cache";
 import { bindings as HTMX } from "@deco/deco/htmx";
 import { Layout } from "./_app.tsx";
 import { middlewaresFor } from "site/middleware.ts";
+import { parseArgs } from "jsr:@std/cli/parse-args";
+import { basename, dirname } from "jsr:@std/path";
+
+const flags = parseArgs(Deno.args, {
+  string: ["apps"],
+});
+
+let importMap: ReturnType<typeof buildImportMap> | undefined = undefined;
+if (flags.apps) {
+  importMap = buildImportMap(manifest);
+  const appPaths = flags.apps.split(",");
+  for (const appPath of appPaths) {
+    const appName = basename(dirname(appPath));
+    const appFile = import.meta.resolve(appPath);
+    const appMod = await import(appFile);
+    const appTsName = `site/apps/deco/${appName}.ts`;
+    importMap.imports[appTsName] = appFile;
+    // @ts-ignore: This is a hack to get the app module into the manifest
+    manifest.apps[appTsName] = appMod;
+  }
+}
 
 export interface MCPInstance {
   deco: Deco<Manifest>;
@@ -47,6 +68,7 @@ export const decoInstance = async (
   if (!instance) {
     instance = Deco.init<Manifest>({
       manifest,
+      importMap,
       decofile,
       bindings: {
         ...bindings ?? {},
