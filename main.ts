@@ -26,7 +26,10 @@ app.use("/*", async (ctx) => {
     });
     return run();
   }
-  return ctx.res = await MCP_REGISTRY.fetch(ctx.req.raw);
+  const run = Context.bind(MCP_REGISTRY.ctx, async () => {
+    return await MCP_REGISTRY.fetch(ctx.req.raw);
+  });
+  return run();
 });
 
 Deno.serve({ handler: app.fetch, port: envPort ? +envPort : 8000 });
