@@ -19,7 +19,7 @@ export const loader = async (props: Props, _req: Request, ctx: AppContext) => {
   }
 
   const mcp = await ctx.invoke.site.loaders.mcps.get({
-    id: props.id,
+    id: decodeURIComponent(props.id!),
   });
 
   if (!mcp) {
@@ -40,7 +40,7 @@ export const action = async (
     const config = formProps.config;
 
     const result = await ctx.invoke.site.actions.mcps.configure({
-      id: props.id!,
+      id: decodeURIComponent(props.id!),
       props: JSON.parse(config as any as string),
     });
 
