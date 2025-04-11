@@ -19,7 +19,7 @@ export const loader = async (props: Props, _req: Request, ctx: AppContext) => {
   }
 
   const mcp = await ctx.invoke.site.loaders.mcps.get({
-    id: decodeURIComponent(props.id),
+    id: props.id,
   });
 
   if (!mcp) {
@@ -40,8 +40,7 @@ export const action = async (
     const config = formProps.config;
 
     const result = await ctx.invoke.site.actions.mcps.configure({
-      id: decodeURIComponent(props.id!),
-      // deno-lint-ignore no-explicit-any
+      id: props.id!,
       props: JSON.parse(config as any as string),
     });
 
