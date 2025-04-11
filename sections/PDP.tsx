@@ -4,6 +4,7 @@ import { AppContext } from "../apps/site.ts";
 import { type MCP } from "../loaders/mcps/search.ts";
 import { useId } from "../sdk/useId.ts";
 import { useScript } from "@deco/deco/hooks";
+import RJSF from "site/components/RJSF.tsx";
 
 export interface Props {
   id?: string;
@@ -245,6 +246,25 @@ export default function PDP({ mcp, error, installation }: Props) {
     }
 
     function setupEditor() {
+      function handleSubmit({ formData, slot }) {
+        const form = new FormData();
+        form.append("config", JSON.stringify(formData));
+
+        return fetch(globalThis.location.href, {
+          method: "POST",
+          body: form,
+        })
+          .then(function (response) {
+            return response.text();
+          })
+          .then(function (result) {
+            const s = document.getElementById(slot);
+            if (s) s.innerHTML = result;
+          });
+      }
+
+      window.handleSubmitForm = handleSubmit;
+
       const editorElement = document.getElementById(editorId);
       const schemaElement = document.getElementById(schemaId);
       const errorElement = document.getElementById(errorId);
@@ -268,10 +288,19 @@ export default function PDP({ mcp, error, installation }: Props) {
           enableSchemaRequest: false,
         });
 
+        // Try to get initial data from RJSF form if available
+        let initialValue = "{}";
+        if (window.getFormData && typeof window.getFormData === "function") {
+          const formData = window.getFormData("rjsf-form");
+          if (formData && Object.keys(formData).length > 0) {
+            initialValue = JSON.stringify(formData, null, 2);
+          }
+        }
+
         globalThis.monacoEditor = globalThis.monaco.editor.create(
           editorElement,
           {
-            value: "{}",
+            value: initialValue,
             language: "json",
             theme: "vs",
             automaticLayout: true,
@@ -305,6 +334,45 @@ export default function PDP({ mcp, error, installation }: Props) {
             if (errorElement) {
               errorElement.style.display = "none";
             }
+          }
+        });
+
+        // Add content change listener to update RJSF form
+        globalThis.monacoEditor.onDidChangeModelContent(function () {
+          try {
+            const jsonValue = globalThis.monacoEditor.getValue();
+            if (!jsonValue) return;
+
+            const parsedJson = JSON.parse(jsonValue);
+
+            // Update RJSF form with Monaco editor content
+            if (window.updateFormData) {
+              window.updateFormData("rjsf-form", parsedJson);
+            }
+          } catch (err) {
+            // Ignore parsing errors during typing
+            console.debug("JSON parsing during typing:", err);
+          }
+        });
+
+        // Listen for RJSF form changes to update Monaco
+        document.addEventListener("rjsf-form-change", function (event) {
+          if (!globalThis.monacoEditor) return;
+
+          const formData = event.detail.formData;
+          const currentValue = globalThis.monacoEditor.getValue();
+
+          try {
+            const currentJson = JSON.parse(currentValue || "{}");
+
+            // Only update if the values are different to avoid loops
+            if (JSON.stringify(currentJson) !== JSON.stringify(formData)) {
+              globalThis.monacoEditor.setValue(
+                JSON.stringify(formData, null, 2),
+              );
+            }
+          } catch (err) {
+            console.error("Error updating Monaco from RJSF:", err);
           }
         });
 
@@ -385,23 +453,13 @@ export default function PDP({ mcp, error, installation }: Props) {
         }
       }
 
-      const form = new FormData();
-      form.append("config", JSON.stringify(parsedJson));
-
       if (errorElement) {
         errorElement.style.display = "none";
       }
 
-      fetch(globalThis.location.href, {
-        method: "POST",
-        body: form,
-      })
-        .then(function (response) {
-          return response.text();
-        })
-        .then(function (result) {
-          const s = document.getElementById(slot);
-          if (s) s.innerHTML = result;
+      window
+        .handleSubmitForm({ formData: parsedJson, slot })
+        .then(() => {
           resetButton();
         })
         .catch(function (err) {
@@ -422,8 +480,87 @@ export default function PDP({ mcp, error, installation }: Props) {
     }
   }
 
+  // Function to initialize the form and editor synchronization
+  function initFormEditorSync() {
+    // This function will be called after both the form and editor are initialized
+    // It ensures that the initial state is synchronized
+    setTimeout(() => {
+      if (window.getFormData && globalThis.monacoEditor) {
+        const formData = window.getFormData("rjsf-form");
+        const editorValue = globalThis.monacoEditor.getValue();
+
+        try {
+          const editorJson = JSON.parse(editorValue || "{}");
+
+          // If form has data but editor is empty, update editor
+          if (
+            Object.keys(formData).length > 0 &&
+            Object.keys(editorJson).length === 0
+          ) {
+            globalThis.monacoEditor.setValue(JSON.stringify(formData, null, 2));
+          } // If editor has data but form is empty, update form
+          else if (
+            Object.keys(editorJson).length > 0 &&
+            Object.keys(formData).length === 0
+          ) {
+            if (window.updateFormData) {
+              window.updateFormData("rjsf-form", editorJson);
+            }
+          }
+        } catch (err) {
+          console.error("Error during initial sync:", err);
+        }
+      }
+    }, 500); // Give time for both components to initialize
+  }
+
+  function toggleViewMode() {
+    // Função para inicializar os botões de alternância
+    function initToggleButtons() {
+      const formView = document.getElementById("form-view");
+      const jsonView = document.getElementById("json-view");
+      const formButton = document.getElementById("form-button");
+      const jsonButton = document.getElementById("json-button");
+
+      if (!formView || !jsonView || !formButton || !jsonButton) {
+        console.error("Elementos de visualização não encontrados");
+        return;
+      }
+
+      // Função para alternar entre as visualizações
+      function toggleViews() {
+        const [toDisplayView, toHiddenView, toDisplayBtn, toHiddenBtn] =
+          formView.classList.contains("hidden")
+            ? [formView, jsonView, jsonButton, formButton]
+            : [jsonView, formView, formButton, jsonButton];
+
+        toDisplayView.classList.remove("hidden");
+        toHiddenView.classList.add("hidden");
+
+        toDisplayBtn.classList.remove("hidden");
+        toHiddenBtn.classList.add("hidden");
+      }
+
+      // Adicionar event listeners aos botões
+      jsonButton.addEventListener("click", toggleViews);
+      formButton.addEventListener("click", toggleViews);
+    }
+
+    // Tentar inicializar imediatamente
+    if (
+      document.readyState === "complete" ||
+      document.readyState === "interactive"
+    ) {
+      setTimeout(initToggleButtons, 1);
+    } else {
+      document.addEventListener("DOMContentLoaded", initToggleButtons);
+    }
+  }
+
   const handleSetup = useScript(setupMonaco, editorId, schemaId, errorId);
   const handleClick = useScript(handleSubmit, slot, loadingId, btnTextId);
+  const handleSync = useScript(initFormEditorSync);
+  const handleToggleView = useScript(toggleViewMode);
 
   if (error) {
     return (
@@ -516,9 +653,60 @@ export default function PDP({ mcp, error, installation }: Props) {
         </a>
       </div>
       <h1 class="text-4xl font-bold mb-6">{mcp.name}</h1>
-      <p class="text-gray-600 mb-8">{mcp.description}</p>
+      <hgroup class="text-gray-600 mb-8 flex items-center justify-between gap-4">
+        <h2>{mcp.description}</h2>
+        <div class="w-10 h-10 flex">
+          {/* Botão JSON - Mostrado apenas quando o Form está selecionado */}
+          <label
+            id="json-button"
+            class="p-2 rounded-full hover:bg-gray-300/30 transition-colors cursor-pointer"
+            title="Switch to JSON view"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="24px"
+              viewBox="0 -960 960 960"
+              width="24px"
+              fill="currentColor"
+            >
+              <path d="M560-160v-80h120q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720H560v-80h120q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560h40v160h-40q-17 0-28.5 11.5T800-360v80q0 50-35 85t-85 35H560Zm-280 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400H80v-160h40q17 0 28.5-11.5T160-600v-80q0-50 35-85t85-35h120v80H280q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h120v80H280Z" />
+            </svg>
+          </label>
 
-      <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+          {/* Botão Form - Mostrado apenas quando o JSON está selecionado */}
+          <label
+            id="form-button"
+            class="p-2 rounded-full hover:bg-gray-300/30 transition-colors cursor-pointer hidden"
+            title="Switch to Form view"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="24px"
+              viewBox="0 -960 960 960"
+              width="24px"
+              fill="currentColor"
+            >
+              <path d="M280-600v-80h560v80H280Zm0 160v-80h560v80H280Zm0 160v-80h560v80H280ZM160-600q-17 0-28.5-11.5T120-640q0-17 11.5-28.5T160-680q17 0 28.5 11.5T200-640q0 17-11.5 28.5T160-600Zm0 160q-17 0-28.5-11.5T120-480q0-17 11.5-28.5T160-520q17 0 28.5 11.5T200-480q0 17-11.5 28.5T160-440Zm0 160q-17 0-28.5-11.5T120-320q0-17 11.5-28.5T160-360q17 0 28.5 11.5T200-320q0 17-11.5 28.5T160-280Z" />
+            </svg>
+          </label>
+        </div>
+      </hgroup>
+
+      <div
+        id="form-view"
+        class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 "
+      >
+        <RJSF
+          schema={mcp.inputSchema}
+          formId="rjsf-form"
+          slotId={slot}
+        />
+      </div>
+
+      <div
+        id="json-view"
+        class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 hidden"
+      >
         <h2 class="text-2xl font-bold mb-6">Configure Installation</h2>
 
         {/* Schema Properties Table */}
@@ -580,9 +768,9 @@ export default function PDP({ mcp, error, installation }: Props) {
             </span>
           </button>
         </form>
-
-        <div id={slot} />
       </div>
+
+      <div id={slot} />
 
       {/* Store the input schema */}
       <script
@@ -605,6 +793,12 @@ export default function PDP({ mcp, error, installation }: Props) {
 
       {/* Initialize Monaco */}
       <script dangerouslySetInnerHTML={{ __html: handleSetup }} />
+
+      {/* Initialize form-editor synchronization */}
+      <script dangerouslySetInnerHTML={{ __html: handleSync }} />
+
+      {/* Initialize view toggle */}
+      <script dangerouslySetInnerHTML={{ __html: handleToggleView }} />
     </div>
   );
 }
