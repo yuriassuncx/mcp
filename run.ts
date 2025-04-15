@@ -88,8 +88,10 @@ async function register(
       );
 
       console.log(
-        `\ndeco.cx started environment ${colors.green(env)} for site ${colors.brightBlue(site)
-        }\n   -> 🌐 ${colors.bold("Preview")}: ${colors.cyan(`https://${domain}`)
+        `\ndeco.cx started environment ${colors.green(env)} for site ${
+          colors.brightBlue(site)
+        }\n   -> 🌐 ${colors.bold("Preview")}: ${
+          colors.cyan(`https://${domain}`)
         }\n   -> ✏️ ${colors.bold("Admin")}: ${colors.cyan(admin.href)}\n`,
       );
     });
@@ -121,6 +123,9 @@ await Deno.writeTextFile(denoJSONPath, denoJSON);
 
 const MAIN = join(dirname, "main.ts");
 
+const args = Deno.args.length === 0
+  ? [`--apps=${join(Deno.cwd(), "index.ts")}`]
+  : Deno.args;
 const SELF_DECO_HOST = `${SITE_NAME}.deco.site`;
 const cmd = new Deno.Command(Deno.execPath(), {
   args: [
@@ -130,13 +135,13 @@ const cmd = new Deno.Command(Deno.execPath(), {
     "-A",
     MAIN,
     `--static-root=${STATIC_ROOT}`,
-    ...Deno.args,
+    ...args,
   ],
   env: {
     DECO_ALLOWED_AUTHORITIES: SELF_DECO_HOST,
     DECO_RELEASE: `https://${SELF_DECO_HOST}/.decofile`,
-    STATIC_ROOT
-  }
+    STATIC_ROOT,
+  },
 });
 
 cmd.spawn();
