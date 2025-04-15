@@ -4,7 +4,7 @@
     "@deco/durable": "jsr:@deco/durable@0.5.3",
     "@deco/mcp": "jsr:@deco/mcp@0.3.5",
     "@hono/hono": "jsr:@hono/hono@^4.5.4",
-    "site": "./",
+    "site/": "./",
     "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.6.1",
     "ajv": "npm:ajv@^8.17.1",
     "lru-cache": "npm:lru-cache@^11.1.0",
@@ -19,9 +19,9 @@
     "@preact/signals-core": "https://esm.sh/*@preact/signals-core@1.5.1",
     "@deco/htmx": "https://denopkg.com/deco-cx/apps@0.74.0/htmx/mod.ts",
     "https://esm.sh/*preact-render-to-string@6.3.1": "npm:preact-render-to-string@6.4.2",
-    "@deco/dev": "jsr:@deco/dev@1.112.2",
+    "@deco/dev": "jsr:@deco/dev@1.115.0",
     "daisyui": "npm:daisyui@4.6.0",
-    "@deco/deco": "jsr:@deco/deco@1.112.2"
+    "@deco/deco": "jsr:@deco/deco@1.115.0"
   },
   "tasks": {
     "start": "deno run -A --unstable-http --env https://deco.cx/run -- deno task dev",
