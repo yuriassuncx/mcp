@@ -39,10 +39,8 @@ export async function register(
       );
 
       console.log(
-        `\ndeco.cx started environment ${colors.green(env)} for site ${
-          colors.brightBlue(site)
-        }\n   -> 🌐 ${colors.bold("Preview")}: ${
-          colors.cyan(`https://${domain}`)
+        `\ndeco.cx started environment ${colors.green(env)} for site ${colors.brightBlue(site)
+        }\n   -> 🌐 ${colors.bold("Preview")}: ${colors.cyan(`https://${domain}`)
         }\n   -> ✏️ ${colors.bold("Admin")}: ${colors.cyan(admin.href)}\n`,
       );
     });
@@ -110,5 +108,6 @@ await register({
   env: Deno.env.get("DECO_ENV_NAME") || stableEnvironmentName(),
   site: "mcp",
   port: `${port}`,
+  decoHost: true,
 });
 await cmd.output();
