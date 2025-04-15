@@ -1,3 +1,4 @@
+import { parseArgs } from "jsr:@std/cli/parse-args";
 import { connect } from "jsr:@deco/warp";
 import * as colors from "jsr:@std/fmt/colors";
 import { join } from "jsr:@std/path/posix";
@@ -123,6 +124,11 @@ const MAIN = join(dirname, "main.ts");
 const args = Deno.args.length === 0
   ? [`--apps=${join(Deno.cwd(), "index.ts")}`]
   : Deno.args;
+
+const flags = parseArgs(args, {
+  string: ["apps"],
+});
+
 const SELF_DECO_HOST = `${SITE_NAME}.deco.site`;
 const cmd = new Deno.Command(Deno.execPath(), {
   args: [
@@ -130,6 +136,7 @@ const cmd = new Deno.Command(Deno.execPath(), {
     "--config",
     denoJSONPath,
     "--unstable-kv",
+    `--watch=${flags.apps}`,
     "-A",
     MAIN,
     `--static-root=${STATIC_ROOT}`,
