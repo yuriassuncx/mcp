@@ -11,7 +11,6 @@
     "react": "npm:preact@10.23.1/compat",
     "react-dom": "npm:preact@10.23.1/compat",
     "preact-render-to-string": "npm:preact-render-to-string@6.4.2",
-    "site/": "./",
     "@std/http": "jsr:@std/http@^1.0.13",
     "std/": "https://deno.land/std@0.190.0/",
     "apps/": "https://cdn.jsdelivr.net/gh/deco-cx/apps@0.74.0/",
