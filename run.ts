@@ -1,12 +1,10 @@
-import { join } from "jsr:@std/path/posix";
 import { connect } from "jsr:@deco/warp";
 import * as colors from "jsr:@std/fmt/colors";
+import { join } from "jsr:@std/path/posix";
 
 export interface TunnelRegisterOptions {
-  env: string;
-  site: string;
+  domain: string;
   port: string;
-  decoHost?: boolean;
 }
 
 const SITE_NAME = "mcp";
@@ -14,6 +12,22 @@ const SITE_NAME = "mcp";
 const VERBOSE = Deno.env.get("VERBOSE");
 const DECO_HOST_FOLDER = ".deco_host";
 const STATIC_FOLDER = "static";
+const port = Number(Deno.env.get("APP_PORT")) || 8000;
+
+const LOCAL_STORAGE_ENV_NAME = "deco_host_env_name";
+const stableEnvironmentName = () => {
+  const savedEnvironment = localStorage.getItem(LOCAL_STORAGE_ENV_NAME);
+  if (savedEnvironment) {
+    return savedEnvironment;
+  }
+
+  const newEnvironment = `${crypto.randomUUID().slice(0, 6)}-localhost`;
+  localStorage.setItem(LOCAL_STORAGE_ENV_NAME, newEnvironment);
+  return newEnvironment;
+};
+
+const ENV = Deno.env.get("DECO_ENV_NAME") || stableEnvironmentName();
+const decoHostDomain = `${ENV}--${SITE_NAME}.deco.host`;
 
 // Create .deco_host folder in current working directory
 const decoHostPath = join(Deno.cwd(), DECO_HOST_FOLDER);
@@ -61,18 +75,9 @@ async function downloadStatic() {
 }
 
 async function register(
-  { env, site, port, decoHost }: TunnelRegisterOptions,
+  { port, domain }: TunnelRegisterOptions,
 ) {
-  const decoHostDomain = `${env}--${site}.deco.host`;
-  const { server, domain } = decoHost
-    ? {
-      server: `wss://${decoHostDomain}`,
-      domain: decoHostDomain,
-    }
-    : {
-      server: "wss://simpletunnel.deco.site",
-      domain: `${env}--${site}.deco.site`,
-    };
+  const server = `wss://${domain}`;
   const localAddr = `http://localhost:${port}`;
   await connect({
     domain,
@@ -82,15 +87,9 @@ async function register(
       "c309424a-2dc4-46fe-bfc7-a7c10df59477",
   }).then((r) => {
     r.registered.then(() => {
-      const admin = new URL(
-        `/sites/${site}/spaces/dashboard?env=${env}`,
-        "https://admin.deco.cx",
-      );
-
       console.log(
-        `\ndeco.cx started environment ${colors.green(env)} for site ${colors.brightBlue(site)
-        }\n   -> 🌐 ${colors.bold("Preview")}: ${colors.cyan(`https://${domain}`)
-        }\n   -> ✏️ ${colors.bold("Admin")}: ${colors.cyan(admin.href)}\n`,
+        `\ndeco.host started \n   -> 🌐 ${colors.bold("Preview")}: ${colors.cyan(`https://${domain}`)
+        }`,
       );
     });
     return r.closed.then(async (err) => {
@@ -99,7 +98,7 @@ async function register(
         VERBOSE ? err : "",
       );
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return register({ env, site, port });
+      return register({ domain, port });
     });
   }).catch(async (err) => {
     console.log(
@@ -107,7 +106,7 @@ async function register(
       VERBOSE ? err : "",
     );
     await new Promise((resolve) => setTimeout(resolve, 500));
-    return register({ env, site, port });
+    return register({ domain, port });
   });
 }
 
@@ -140,30 +139,15 @@ const cmd = new Deno.Command(Deno.execPath(), {
     DECO_ALLOWED_AUTHORITIES: SELF_DECO_HOST,
     DECO_RELEASE: `https://${SELF_DECO_HOST}/.decofile`,
     STATIC_ROOT,
+    MY_DOMAIN: `https://${decoHostDomain}`,
   },
 });
 
 cmd.spawn();
 
-const port = Number(Deno.env.get("APP_PORT")) || 8000;
-
-const LOCAL_STORAGE_ENV_NAME = "deco_host_env_name";
-const stableEnvironmentName = () => {
-  const savedEnvironment = localStorage.getItem(LOCAL_STORAGE_ENV_NAME);
-  if (savedEnvironment) {
-    return savedEnvironment;
-  }
-
-  const newEnvironment = `${crypto.randomUUID().slice(0, 6)}-localhost`;
-  localStorage.setItem(LOCAL_STORAGE_ENV_NAME, newEnvironment);
-  return newEnvironment;
-};
-
 await register({
-  env: Deno.env.get("DECO_ENV_NAME") || stableEnvironmentName(),
-  site: SITE_NAME,
+  domain: decoHostDomain,
   port: `${port}`,
-  decoHost: true,
 });
 await downloadPromise;
 await cmd.output();

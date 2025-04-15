@@ -62,7 +62,7 @@ export interface ConfigurationResult {
 const envName = Deno.env.get("DECO_ENV_NAME");
 const siteName = Deno.env.get("DECO_SITE_NAME");
 const subdomain = envName ? `${envName}--${siteName}` : siteName;
-const MY_DOMAIN = `https://${subdomain}.deco.site`;
+const MY_DOMAIN = Deno.env.get("MY_DOMAIN") || `https://${subdomain}.deco.site`;
 
 const configureDeco = async (
   integration: DecoMCP,
