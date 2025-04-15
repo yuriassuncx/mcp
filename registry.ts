@@ -108,6 +108,7 @@ export const cleanInstance = (installId: string) => {
   contexts.delete(installId);
 };
 
+console.log(flags);
 export const { deco: MCP_REGISTRY } = (await decoInstance({
   bindings: HTMX<Manifest>({
     Layout,

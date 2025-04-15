@@ -40,17 +40,22 @@ async function downloadStatic() {
     }
   }
 
-  const apiUrl = `https://api.github.com/repos/${REPO}/contents/${STATIC_FOLDER}`;
+  const apiUrl =
+    `https://api.github.com/repos/${REPO}/contents/${STATIC_FOLDER}`;
   const response = await fetch(apiUrl);
   const data = await response.json();
 
-  await Promise.all(data.map(async (file: { type: string; download_url: string; name: string }) => {
-    if (file.type === "file") {
-      const filePath = join(STATIC_ROOT, file.name);
-      const content = await fetch(file.download_url);
-      await Deno.writeFile(filePath, await content.bytes());
-    }
-  }));
+  await Promise.all(
+    data.map(
+      async (file: { type: string; download_url: string; name: string }) => {
+        if (file.type === "file") {
+          const filePath = join(STATIC_ROOT, file.name);
+          const content = await fetch(file.download_url);
+          await Deno.writeFile(filePath, await content.bytes());
+        }
+      },
+    ),
+  );
 }
 
 async function register(
@@ -81,8 +86,10 @@ async function register(
       );
 
       console.log(
-        `\ndeco.cx started environment ${colors.green(env)} for site ${colors.brightBlue(site)
-        }\n   -> 🌐 ${colors.bold("Preview")}: ${colors.cyan(`https://${domain}`)
+        `\ndeco.cx started environment ${colors.green(env)} for site ${
+          colors.brightBlue(site)
+        }\n   -> 🌐 ${colors.bold("Preview")}: ${
+          colors.cyan(`https://${domain}`)
         }\n   -> ✏️ ${colors.bold("Admin")}: ${colors.cyan(admin.href)}\n`,
       );
     });
@@ -106,28 +113,22 @@ async function register(
 
 const dirname = import.meta.url.split("/").slice(0, -1).join("/");
 const denoJSONURL = import.meta.resolve(dirname + "/deno.json");
-const dotEnvURL = import.meta.resolve(dirname + "/.env");
 const denoJSON = await fetch(denoJSONURL).then((res) => res.text());
-const dotEnv = await fetch(dotEnvURL).then((res) => res.text());
 
 const denoJSONPath = join(decoHostPath, "deno.json");
 const downloadPromise = downloadStatic();
 await Deno.writeTextFile(denoJSONPath, denoJSON);
-await Deno.writeTextFile(join(decoHostPath, ".env"), dotEnv);
 
 const MAIN = join(dirname, "main.ts");
-const dotEnvPath = join(decoHostPath, ".env");
 
 const cmd = new Deno.Command(Deno.execPath(), {
   args: [
     "run",
-    `--env-file=${dotEnvPath}`,
     "--config",
     denoJSONPath,
     "-A",
     MAIN,
-    "--static-root",
-    STATIC_ROOT,
+    `--static-root=${STATIC_ROOT}`,
     ...Deno.args,
   ],
 });
