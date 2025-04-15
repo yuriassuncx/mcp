@@ -9,6 +9,8 @@ export interface TunnelRegisterOptions {
   decoHost?: boolean;
 }
 
+const SITE_NAME = "mcp";
+
 const VERBOSE = Deno.env.get("VERBOSE");
 const DECO_HOST_FOLDER = ".deco_host";
 const STATIC_FOLDER = "static";
@@ -25,7 +27,7 @@ try {
 
 const STATIC_ROOT = join(decoHostPath, STATIC_FOLDER);
 
-const REPO = "deco-sites/mcp";
+const REPO = `deco-sites/${SITE_NAME}`;
 async function downloadStatic() {
   try {
     await Deno.mkdir(STATIC_ROOT, { recursive: true });
@@ -86,10 +88,8 @@ async function register(
       );
 
       console.log(
-        `\ndeco.cx started environment ${colors.green(env)} for site ${
-          colors.brightBlue(site)
-        }\n   -> 🌐 ${colors.bold("Preview")}: ${
-          colors.cyan(`https://${domain}`)
+        `\ndeco.cx started environment ${colors.green(env)} for site ${colors.brightBlue(site)
+        }\n   -> 🌐 ${colors.bold("Preview")}: ${colors.cyan(`https://${domain}`)
         }\n   -> ✏️ ${colors.bold("Admin")}: ${colors.cyan(admin.href)}\n`,
       );
     });
@@ -121,6 +121,7 @@ await Deno.writeTextFile(denoJSONPath, denoJSON);
 
 const MAIN = join(dirname, "main.ts");
 
+const SELF_DECO_HOST = `${SITE_NAME}.deco.site`;
 const cmd = new Deno.Command(Deno.execPath(), {
   args: [
     "run",
@@ -131,6 +132,11 @@ const cmd = new Deno.Command(Deno.execPath(), {
     `--static-root=${STATIC_ROOT}`,
     ...Deno.args,
   ],
+  env: {
+    DECO_ALLOWED_AUTHORITIES: SELF_DECO_HOST,
+    DECO_RELEASE: `https://${SELF_DECO_HOST}/.decofile`,
+    STATIC_ROOT
+  }
 });
 
 cmd.spawn();
@@ -151,7 +157,7 @@ const stableEnvironmentName = () => {
 
 await register({
   env: Deno.env.get("DECO_ENV_NAME") || stableEnvironmentName(),
-  site: "mcp",
+  site: SITE_NAME,
   port: `${port}`,
   decoHost: true,
 });
