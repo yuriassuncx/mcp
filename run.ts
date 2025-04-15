@@ -10,8 +10,50 @@ export interface TunnelRegisterOptions {
 }
 
 const VERBOSE = Deno.env.get("VERBOSE");
+const DECO_HOST_FOLDER = ".deco_host";
+const STATIC_FOLDER = "static";
 
-export async function register(
+// Create .deco_host folder in current working directory
+const decoHostPath = join(Deno.cwd(), DECO_HOST_FOLDER);
+try {
+  await Deno.mkdir(decoHostPath, { recursive: true });
+} catch (e) {
+  if (!(e instanceof Deno.errors.AlreadyExists)) {
+    throw e;
+  }
+}
+
+const STATIC_ROOT = join(decoHostPath, STATIC_FOLDER);
+
+const REPO = "deco-sites/mcp";
+async function downloadStatic() {
+  try {
+    await Deno.mkdir(STATIC_ROOT, { recursive: true });
+  } catch (e) {
+    if (!(e instanceof Deno.errors.AlreadyExists)) {
+      throw e;
+    }
+    // If the directory exists and has contents, we can skip downloading
+    const existing = [...Deno.readDirSync(STATIC_ROOT)];
+    if (existing.length > 0) {
+      return;
+    }
+  }
+
+  const apiUrl = `https://api.github.com/repos/${REPO}/contents/${STATIC_FOLDER}`;
+  const response = await fetch(apiUrl);
+  const data = await response.json();
+
+  await Promise.all(data.map(async (file: { type: string; download_url: string; name: string }) => {
+    if (file.type === "file") {
+      const filePath = join(STATIC_ROOT, file.name);
+      const content = await fetch(file.download_url);
+      await Deno.writeFile(filePath, await content.bytes());
+    }
+  }));
+}
+
+async function register(
   { env, site, port, decoHost }: TunnelRegisterOptions,
 ) {
   const decoHostDomain = `${env}--${site}.deco.host`;
@@ -68,13 +110,13 @@ const dotEnvURL = import.meta.resolve(dirname + "/.env");
 const denoJSON = await fetch(denoJSONURL).then((res) => res.text());
 const dotEnv = await fetch(dotEnvURL).then((res) => res.text());
 
-const temp = await Deno.makeTempDir();
-const denoJSONPath = join(temp, "deno.json");
+const denoJSONPath = join(decoHostPath, "deno.json");
+const downloadPromise = downloadStatic();
 await Deno.writeTextFile(denoJSONPath, denoJSON);
-await Deno.writeTextFile(join(temp, ".env"), dotEnv);
+await Deno.writeTextFile(join(decoHostPath, ".env"), dotEnv);
 
 const MAIN = join(dirname, "main.ts");
-const dotEnvPath = join(temp, ".env");
+const dotEnvPath = join(decoHostPath, ".env");
 
 const cmd = new Deno.Command(Deno.execPath(), {
   args: [
@@ -84,6 +126,8 @@ const cmd = new Deno.Command(Deno.execPath(), {
     denoJSONPath,
     "-A",
     MAIN,
+    "--static-root",
+    STATIC_ROOT,
     ...Deno.args,
   ],
 });
@@ -110,4 +154,5 @@ await register({
   port: `${port}`,
   decoHost: true,
 });
+await downloadPromise;
 await cmd.output();

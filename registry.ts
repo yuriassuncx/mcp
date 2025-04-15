@@ -11,7 +11,7 @@ import { parseArgs } from "jsr:@std/cli/parse-args";
 import { basename, dirname } from "jsr:@std/path";
 
 const flags = parseArgs(Deno.args, {
-  string: ["apps"],
+  string: ["apps", "static-root"],
 });
 
 let importMap: ReturnType<typeof buildImportMap> | undefined = undefined;
@@ -111,5 +111,6 @@ export const cleanInstance = (installId: string) => {
 export const { deco: MCP_REGISTRY } = (await decoInstance({
   bindings: HTMX<Manifest>({
     Layout,
+    staticRoot: flags["static-root"],
   }),
 }))!;
