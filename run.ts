@@ -88,10 +88,8 @@ async function register(
       );
 
       console.log(
-        `\ndeco.cx started environment ${colors.green(env)} for site ${
-          colors.brightBlue(site)
-        }\n   -> 🌐 ${colors.bold("Preview")}: ${
-          colors.cyan(`https://${domain}`)
+        `\ndeco.cx started environment ${colors.green(env)} for site ${colors.brightBlue(site)
+        }\n   -> 🌐 ${colors.bold("Preview")}: ${colors.cyan(`https://${domain}`)
         }\n   -> ✏️ ${colors.bold("Admin")}: ${colors.cyan(admin.href)}\n`,
       );
     });
@@ -132,6 +130,7 @@ const cmd = new Deno.Command(Deno.execPath(), {
     "run",
     "--config",
     denoJSONPath,
+    "--unstable-kv",
     "-A",
     MAIN,
     `--static-root=${STATIC_ROOT}`,
