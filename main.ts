@@ -19,7 +19,7 @@ app.use("/*", async (ctx) => {
 
   if (installId && appName) {
     const decodedAppName = decodeURIComponent(appName);
-    
+
     const instance = await decoInstance({ installId, appName: decodedAppName });
     if (!instance) {
       return ctx.res = await ctx.notFound();

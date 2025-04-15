@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { asset } from "@deco/deco/htmx";
 
 const RJSF_ID = "MCP_RJSF_FORM";

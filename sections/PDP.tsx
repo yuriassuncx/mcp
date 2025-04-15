@@ -260,7 +260,7 @@ export default function PDP({ mcp, error, installation }: Props) {
           });
       }
 
-      window.handleSubmitForm = handleSubmit;
+      globalThis.handleSubmitForm = handleSubmit;
 
       const editorElement = document.getElementById(editorId);
       const schemaElement = document.getElementById(schemaId);
@@ -287,8 +287,10 @@ export default function PDP({ mcp, error, installation }: Props) {
 
         // Try to get initial data from RJSF form if available
         let initialValue = "{}";
-        if (window.getFormData && typeof window.getFormData === "function") {
-          const formData = window.getFormData("rjsf-form");
+        if (
+          globalThis.getFormData && typeof globalThis.getFormData === "function"
+        ) {
+          const formData = globalThis.getFormData("rjsf-form");
           if (formData && Object.keys(formData).length > 0) {
             initialValue = JSON.stringify(formData, null, 2);
           }
@@ -343,8 +345,8 @@ export default function PDP({ mcp, error, installation }: Props) {
             const parsedJson = JSON.parse(jsonValue);
 
             // Update RJSF form with Monaco editor content
-            if (window.updateFormData) {
-              window.updateFormData("rjsf-form", parsedJson);
+            if (globalThis.updateFormData) {
+              globalThis.updateFormData("rjsf-form", parsedJson);
             }
           } catch (err) {
             // Ignore parsing errors during typing
@@ -454,7 +456,7 @@ export default function PDP({ mcp, error, installation }: Props) {
         errorElement.style.display = "none";
       }
 
-      window
+      globalThis
         .handleSubmitForm({ formData: parsedJson, slot })
         .then(() => {
           resetButton();
@@ -482,8 +484,8 @@ export default function PDP({ mcp, error, installation }: Props) {
     // This function will be called after both the form and editor are initialized
     // It ensures that the initial state is synchronized
     setTimeout(() => {
-      if (window.getFormData && globalThis.monacoEditor) {
-        const formData = window.getFormData("rjsf-form");
+      if (globalThis.getFormData && globalThis.monacoEditor) {
+        const formData = globalThis.getFormData("rjsf-form");
         const editorValue = globalThis.monacoEditor.getValue();
 
         try {
@@ -500,8 +502,8 @@ export default function PDP({ mcp, error, installation }: Props) {
             Object.keys(editorJson).length > 0 &&
             Object.keys(formData).length === 0
           ) {
-            if (window.updateFormData) {
-              window.updateFormData("rjsf-form", editorJson);
+            if (globalThis.updateFormData) {
+              globalThis.updateFormData("rjsf-form", editorJson);
             }
           }
         } catch (err) {

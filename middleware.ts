@@ -16,9 +16,11 @@ export const middlewaresFor = (
   listTools: ListToolsMiddleware[];
   callTool: CallToolMiddleware[];
 } => {
-  const checkConfigurationTool = `${slugify(appName)}_${CHECK_CONFIGURATION_TOOL}`;
+  const checkConfigurationTool = `${
+    slugify(appName)
+  }_${CHECK_CONFIGURATION_TOOL}`;
   const configureMcpTool = `${slugify(appName)}_${CONFIGURE_MCP_TOOL}`;
-  
+
   return {
     callTool: [
       async (req, next) => {
@@ -50,7 +52,9 @@ export const middlewaresFor = (
     listTools: [async (_req, next) => {
       const [{ tools }, apps] = await Promise.all([next!(), searchMCPs()]);
 
-      const inputSchema = apps.find((app) => app.name === decodeURIComponent(appName))?.inputSchema;
+      const inputSchema = apps.find((app) =>
+        app.name === decodeURIComponent(appName)
+      )?.inputSchema;
 
       return {
         tools: [...tools, {
