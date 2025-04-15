@@ -4,7 +4,7 @@ import { AppContext } from "../apps/site.ts";
 import { type MCP } from "../loaders/mcps/search.ts";
 import { useId } from "../sdk/useId.ts";
 import { useScript } from "@deco/deco/hooks";
-import RJSF from "site/components/RJSF.tsx";
+import RJSF from "../components/RJSF.tsx";
 
 export interface Props {
   id?: string;
