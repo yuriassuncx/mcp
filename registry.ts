@@ -8,25 +8,49 @@ import { bindings as HTMX } from "@deco/deco/htmx";
 import { Layout } from "./_app.tsx";
 import { middlewaresFor } from "./middleware.ts";
 import { parseArgs } from "jsr:@std/cli/parse-args";
-import { basename, dirname } from "jsr:@std/path";
+import { basename, relative } from "jsr:@std/path";
+import { walk } from "jsr:@std/fs";
 
 const flags = parseArgs(Deno.args, {
   string: ["apps", "static-root"],
 });
 
+const isExportDefaultClass = (value: unknown | { default: unknown }) => {
+  return typeof value === "object" && value && "default" in value &&
+    value.default?.toString().substring(0, 5) === "class";
+}
 let importMap: ReturnType<typeof buildImportMap> | undefined = undefined;
+
+const registerAppModule = async (
+  appTsName: string,
+  appFile: string,
+) => {
+  const appMod = await import(appFile);
+  if (isExportDefaultClass(appMod)) {
+    importMap!.imports[appTsName] = appFile;
+    // @ts-ignore: This is a hack to get the app module into the manifest
+    manifest.apps[appTsName] = appMod;
+  }
+};
+
 if (flags.apps) {
   importMap = buildImportMap(manifest);
   const appPaths = flags.apps.split(",");
   for (const appPath of appPaths) {
-    console.log("[importing]:", appPath);
-    const appName = basename(dirname(appPath));
-    const appFile = `file://${appPath}`;
-    const appMod = await import(appFile);
-    const appTsName = `site/apps/deco/${appName}.ts`;
-    importMap.imports[appTsName] = appFile;
-    // @ts-ignore: This is a hack to get the app module into the manifest
-    manifest.apps[appTsName] = appMod;
+    const stat = await Deno.stat(appPath);
+    if (stat.isDirectory) {
+      for await (const entry of walk(appPath, { exts: [".ts", ".tsx"], includeDirs: false })) {
+        const relPath = relative(appPath, entry.path);
+        const appTsName = `site/apps/deco/${relPath}`;
+        const appFile = `file://${entry.path}`;
+        await registerAppModule(appTsName, appFile);
+      }
+    } else {
+      const relPath = basename(appPath);
+      const appTsName = `site/apps/deco/${relPath}`;
+      const appFile = `file://${appPath}`;
+      await registerAppModule(appTsName, appFile);
+    }
   }
 }
 

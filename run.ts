@@ -122,7 +122,7 @@ await Deno.writeTextFile(denoJSONPath, denoJSON);
 const MAIN = join(dirname, "main.ts");
 
 const args = Deno.args.length === 0
-  ? [`--apps=${join(Deno.cwd(), "index.ts")}`]
+  ? [`--apps=${join(Deno.cwd())}`]
   : Deno.args;
 
 const flags = parseArgs(args, {
