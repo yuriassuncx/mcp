@@ -82,6 +82,37 @@ async function downloadStatic() {
   );
 }
 
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    let command;
+    switch (Deno.build.os) {
+      case "darwin":
+        command = new Deno.Command("pbcopy", { stdin: "piped" });
+        break;
+      case "windows":
+        command = new Deno.Command("clip", { stdin: "piped" });
+        break;
+      case "linux":
+        command = new Deno.Command("xclip", {
+          args: ["-selection", "clipboard"],
+          stdin: "piped",
+        });
+        break;
+      default:
+        return false;
+    }
+
+    const child = command.spawn();
+    const writer = child.stdin.getWriter();
+    await writer.write(new TextEncoder().encode(text));
+    await writer.close();
+    await child.status;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function register(
   { port, domain }: TunnelRegisterOptions,
 ) {
@@ -94,10 +125,14 @@ async function register(
     apiKey: Deno.env.get("DECO_TUNNEL_SERVER_TOKEN") ??
       "c309424a-2dc4-46fe-bfc7-a7c10df59477",
   }).then((r) => {
-    r.registered.then(() => {
+    r.registered.then(async () => {
+      const serverUrl = `https://${domain}`;
+      const copied = await copyToClipboard(serverUrl);
+
       console.log(
-        `\ndeco.host started \n   -> 🌐 ${colors.bold("Preview")}: ${colors.cyan(`https://${domain}`)
-        }`,
+        `\ndeco.host started \n   -> 🌐 ${colors.bold("Preview")}: ${
+          colors.cyan(serverUrl)
+        }${copied ? colors.dim(" (copied to clipboard)") : ""}`,
       );
     });
     return r.closed.then(async (err) => {
@@ -137,6 +172,8 @@ const flags = parseArgs(args, {
 });
 
 const SELF_DECO_HOST = `${SITE_NAME}.deco.site`;
+
+// Modify the command execution to prevent output suppression
 const cmd = new Deno.Command(Deno.execPath(), {
   args: [
     "run",
@@ -144,6 +181,7 @@ const cmd = new Deno.Command(Deno.execPath(), {
     denoJSONPath,
     "--unstable-kv",
     `--watch=${flags.apps}`,
+    `--watch-exclude=${decoHostPath}`,
     "-A",
     MAIN,
     `--static-root=${STATIC_ROOT}`,
@@ -155,14 +193,16 @@ const cmd = new Deno.Command(Deno.execPath(), {
     STATIC_ROOT,
     MY_DOMAIN: `https://${decoHostDomain}`,
   },
+  stdout: "inherit",
+  stderr: "inherit",
 });
+await downloadPromise;
 
-cmd.spawn();
+const cmdProcess = cmd.spawn();
 
 await register({
   domain: decoHostDomain,
   port: `${port}`,
 });
 
-await downloadPromise;
-await cmd.output();
+await cmdProcess.status; // Changed from cmd.output() to cmdProcess.status
