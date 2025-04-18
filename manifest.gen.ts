@@ -17,9 +17,9 @@ import * as $$$$$$$$$$$9 from "./apps/deco/slack.ts";
 import * as $$$$$$$$$$$10 from "./apps/deco/stability.ts";
 import * as $$$$$$$$$$$11 from "./apps/deco/tiptap-cloud.ts";
 import * as $$$$$$$$$$$12 from "./apps/deco/vertex.ts";
-import * as $$$$$$$$$$$13 from "./apps/deco/vnda.ts";
-import * as $$$$$$$$$$$14 from "./apps/deco/vtex.ts";
-import * as $$$$$$$$$$$15 from "./apps/deco/vidu.ts";
+import * as $$$$$$$$$$$13 from "./apps/deco/vidu.ts";
+import * as $$$$$$$$$$$14 from "./apps/deco/vnda.ts";
+import * as $$$$$$$$$$$15 from "./apps/deco/vtex.ts";
 import * as $$$$$$$$$$$16 from "./apps/site.ts";
 import * as $$$0 from "./loaders/mcps/get.ts";
 import * as $$$1 from "./loaders/mcps/search.ts";
@@ -57,9 +57,9 @@ const manifest = {
     "site/apps/deco/stability.ts": $$$$$$$$$$$10,
     "site/apps/deco/tiptap-cloud.ts": $$$$$$$$$$$11,
     "site/apps/deco/vertex.ts": $$$$$$$$$$$12,
-    "site/apps/deco/vnda.ts": $$$$$$$$$$$13,
-    "site/apps/deco/vtex.ts": $$$$$$$$$$$14,
-    "site/apps/deco/vidu.ts": $$$$$$$$$$$15,
+    "site/apps/deco/vidu.ts": $$$$$$$$$$$13,
+    "site/apps/deco/vnda.ts": $$$$$$$$$$$14,
+    "site/apps/deco/vtex.ts": $$$$$$$$$$$15,
     "site/apps/site.ts": $$$$$$$$$$$16,
   },
   "name": "site",
