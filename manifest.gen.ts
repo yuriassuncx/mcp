@@ -23,7 +23,8 @@ import * as $$$$$$$$$$$15 from "./apps/deco/vertex.ts";
 import * as $$$$$$$$$$$16 from "./apps/deco/vidu.ts";
 import * as $$$$$$$$$$$17 from "./apps/deco/vnda.ts";
 import * as $$$$$$$$$$$18 from "./apps/deco/vtex.ts";
-import * as $$$$$$$$$$$19 from "./apps/site.ts";
+import * as $$$$$$$$$$$19 from "./apps/deco/elevenlabs.ts";
+import * as $$$$$$$$$$$20 from "./apps/site.ts";
 import * as $$$0 from "./loaders/mcps/get.ts";
 import * as $$$1 from "./loaders/mcps/search.ts";
 import * as $$$$$$0 from "./sections/Component.tsx";
@@ -66,7 +67,8 @@ const manifest = {
     "site/apps/deco/vidu.ts": $$$$$$$$$$$16,
     "site/apps/deco/vnda.ts": $$$$$$$$$$$17,
     "site/apps/deco/vtex.ts": $$$$$$$$$$$18,
-    "site/apps/site.ts": $$$$$$$$$$$19,
+    "site/apps/deco/elevenlabs.ts": $$$$$$$$$$$19,
+    "site/apps/site.ts": $$$$$$$$$$$20,
   },
   "name": "site",
   "baseUrl": import.meta.url,
