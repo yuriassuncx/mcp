@@ -1,0 +1,1 @@
+export { default } from "apps/1001fx/mod.ts";
