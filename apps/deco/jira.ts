@@ -1,0 +1,1 @@
+export { default } from "apps/jira/mod.ts";
