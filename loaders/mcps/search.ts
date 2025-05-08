@@ -15,8 +15,9 @@ const listFromDeco = async () => {
   const schemas = await MCP_REGISTRY?.meta();
 
   const tools = getTools(names, schemas?.value.schema, { blocks: ["apps"] });
+  console.log(tools);
   const list = tools.filter((t) =>
-    t.name !== "site-apps-deco-htmx-ts"
+    t.name !== "site-apps-deco-htmx-ts" && t.name !== "JS_BUNDLER"
   ) as MCP[];
 
   return list;
