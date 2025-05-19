@@ -10,6 +10,7 @@ import { middlewaresFor } from "./middleware.ts";
 import { parseArgs } from "jsr:@std/cli/parse-args";
 import { basename, relative } from "jsr:@std/path";
 import { walk } from "jsr:@std/fs";
+export { manifest };
 
 const flags = parseArgs(Deno.args, {
   string: ["apps", "static-root"],

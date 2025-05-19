@@ -1,4 +1,5 @@
 import { type App, type AppContext as AC } from "@deco/deco";
+import { Secret } from "apps/website/loaders/secret.ts";
 import { default as website, Props as WebsiteProps } from "apps/website/mod.ts";
 import manifest, { Manifest } from "../manifest.gen.ts";
 import { cleanInstance } from "../registry.ts";
@@ -10,6 +11,7 @@ export interface Storage {
 }
 export interface State {
   installStorage: Storage;
+  oauthClientIds: Record<string, Secret | string>;
 }
 export const installStorage: Storage = {
   async getItem<T>(key: string) {
@@ -35,6 +37,11 @@ export const installStorage: Storage = {
     return Promise.resolve();
   },
 };
+
+export interface McpProps extends WebsiteProps {
+  oauthClientIds?: Record<string, Secret | string>;
+}
+
 /**
  * @name main
  * @internal true
@@ -43,9 +50,9 @@ export const installStorage: Storage = {
  * @category Tool
  * @logo https://ozksgdmyrqcxcwhnbepg.supabase.co/storage/v1/object/public/assets/1/0ac02239-61e6-4289-8a36-e78c0975bcc8
  */
-export default function Site(props: WebsiteProps): App<Manifest, State> {
+export default function Site(props: McpProps): App<Manifest, State> {
   return {
-    state: { installStorage },
+    state: { installStorage, oauthClientIds: props.oauthClientIds ?? {} },
     manifest,
     dependencies: [website(props)],
   };
