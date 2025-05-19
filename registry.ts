@@ -1,15 +1,16 @@
-import { fromJSON } from "@deco/deco/engine";
+// deno-lint-ignore-file no-explicit-any
 import { buildImportMap, Deco, DecoOptions } from "@deco/deco";
+import { fromJSON } from "@deco/deco/engine";
+import { bindings as HTMX } from "@deco/deco/htmx";
+import { mcpServer } from "@deco/mcp";
+import { parseArgs } from "jsr:@std/cli/parse-args";
+import { walk } from "jsr:@std/fs";
+import { basename, relative } from "jsr:@std/path";
+import { LRUCache } from "lru-cache";
+import { Layout } from "./_app.tsx";
 import { installStorage } from "./apps/site.ts";
 import manifest, { Manifest } from "./manifest.gen.ts";
-import { mcpServer } from "@deco/mcp";
-import { LRUCache } from "lru-cache";
-import { bindings as HTMX } from "@deco/deco/htmx";
-import { Layout } from "./_app.tsx";
 import { middlewaresFor } from "./middleware.ts";
-import { parseArgs } from "jsr:@std/cli/parse-args";
-import { basename, relative } from "jsr:@std/path";
-import { walk } from "jsr:@std/fs";
 
 const flags = parseArgs(Deno.args, {
   string: ["apps", "static-root"],
@@ -69,27 +70,32 @@ const contexts = new LRUCache<string, Promise<MCPInstance>>({
   updateAgeOnGet: true,
 });
 
+const defaultInstallId = "default";
+
 export interface MCPInstanceOptions {
-  installId?: string;
+  installId?: string | "default";
   appName?: string;
   bindings?: DecoOptions<Manifest>["bindings"];
 }
 
-export const decoInstance = async (
+const configure = manifest["actions"]["site/actions/mcps/configure.ts"].default;
+export async function decoInstance(
   { installId, appName, bindings }: MCPInstanceOptions,
-): Promise<MCPInstance | undefined> => {
+): Promise<MCPInstance | undefined> {
   let decofile: DecoOptions["decofile"] | undefined = undefined;
 
-  if (!installId) {
-    installId = "default";
-  } else {
-    const form = await installStorage.getItem(installId);
-
-    if (!form) {
-      return undefined;
-    }
-    decofile = fromJSON(form as Record<string, unknown>);
+  const isDefault = installId === defaultInstallId;
+  installId ??= crypto.randomUUID();
+  let form = await installStorage.getItem(installId);
+  if (form == null && !isDefault) {
+    await configure({
+      id: appName!,
+      installId,
+      props: {},
+    });
+    form = await installStorage.getItem(installId);
   }
+  decofile = isDefault ? undefined : fromJSON(form as Record<string, unknown>);
 
   const basePath = appName && installId
     ? `/apps/${encodeURIComponent(appName)}/${installId}`
@@ -104,6 +110,25 @@ export const decoInstance = async (
       bindings: {
         ...bindings ?? {},
         useServer: (deco, hono) => {
+          hono.use("/*", async (c, next) => {
+            const global = (c.var.global ?? {}) as Record<string, unknown>;
+            global.installId = installId;
+            global.appName = appName;
+            global.configure = (props: Record<string, unknown>) =>
+              configure({
+                id: appName!,
+                installId,
+                props,
+              });
+            global.getConfiguration = () => {
+              const { [installId]: config } = form as any ??
+                {};
+              const { __resolveType: _, ...props } = config ?? {};
+              return props;
+            };
+            c.set("global", global);
+            await next();
+          });
           hono.use(
             "/*",
             mcpServer(
@@ -131,13 +156,14 @@ export const decoInstance = async (
   }
 
   return instance;
-};
+}
 
 export const cleanInstance = (installId: string) => {
   contexts.delete(installId);
 };
 
 export const { deco: MCP_REGISTRY } = (await decoInstance({
+  installId: defaultInstallId,
   bindings: HTMX<Manifest>({
     Layout,
     staticRoot: flags["static-root"],

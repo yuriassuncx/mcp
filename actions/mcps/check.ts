@@ -30,6 +30,17 @@ export interface CheckResult {
    */
   config?: any;
 }
+
+export const getConfig = async (
+  installIdOrConfig: string | Record<string, any>,
+  integrationId: string,
+) => {
+  const config = typeof installIdOrConfig === "string"
+    ? await installStorage.getItem<Record<string, any>>(installIdOrConfig)
+    : installIdOrConfig;
+  const { __resolveType: _, ...configData } = config[integrationId];
+  return configData;
+};
 /**
  * @name CONFIGURATION_CHECK
  * @description Check the configuration of an MCP if any error occurs so CONFIGURE should be used
@@ -60,7 +71,10 @@ export default async function checkConfiguration(
   const schema = integration.inputSchema;
   const validate = ajv.compile(schema);
 
-  const { __resolveType: _, ...configData } = config[integrationId];
+  const { __resolveType: _, ...configData } = await getConfig(
+    config,
+    integrationId,
+  );
   return {
     success: validate(configData),
     errors: validate.errors?.map((e) => e.message ?? e.keyword) ?? [],
