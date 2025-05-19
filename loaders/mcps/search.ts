@@ -14,7 +14,12 @@ const listFromDeco = async () => {
   const names = new Map<string, string>();
   const schemas = await MCP_REGISTRY?.meta();
 
-  const tools = getTools(names, schemas?.value.schema, { blocks: ["apps"] });
+  const tools = getTools(
+    names,
+    schemas?.value.schema,
+    { blocks: ["apps"] },
+    schemas?.value?.manifest?.blocks?.apps,
+  );
 
   const list = tools.filter((t) =>
     t.name !== "site-apps-deco-htmx-ts" && t.name !== "JS_BUNDLER"
