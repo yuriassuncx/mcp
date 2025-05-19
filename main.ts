@@ -1,6 +1,7 @@
 import { Context } from "@deco/deco";
 import { Hono } from "@hono/hono";
 import { decoInstance, MCP_REGISTRY } from "./registry.ts";
+import { withOAuth } from "./oauth.ts";
 
 const app = new Hono();
 const envPort = Deno.env.get("PORT");
@@ -8,6 +9,9 @@ const envPort = Deno.env.get("PORT");
 const APPS_INSTALL_URL = new URLPattern({
   pathname: "/apps/:appName/:installId/*",
 });
+
+withOAuth(app);
+
 app.use("/*", async (ctx) => {
   const url = new URL(ctx.req.url);
   const match = APPS_INSTALL_URL.exec({ pathname: url.pathname });
@@ -17,7 +21,7 @@ app.use("/*", async (ctx) => {
   const appName = url.searchParams.get("appName") ??
     match?.pathname?.groups?.appName;
 
-  if (installId && appName) {
+  if (appName) {
     const decodedAppName = decodeURIComponent(appName);
 
     const instance = await decoInstance({ installId, appName: decodedAppName });

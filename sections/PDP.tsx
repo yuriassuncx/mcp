@@ -5,12 +5,14 @@ import { type MCP } from "../loaders/mcps/search.ts";
 import { useId } from "../sdk/useId.ts";
 import { useScript } from "@deco/deco/hooks";
 import RJSF from "../components/RJSF.tsx";
+import { getConfig } from "../actions/mcps/check.ts";
 
 export interface Props {
   id?: string;
   mcp?: MCP;
   installation?: ConfigurationResult;
   error?: string;
+  formData?: any;
 }
 
 export const loader = async (props: Props, _req: Request, ctx: AppContext) => {
@@ -26,7 +28,11 @@ export const loader = async (props: Props, _req: Request, ctx: AppContext) => {
     return { ...props, error: "MCP not found" };
   }
 
-  return { ...props, mcp };
+  const installId = new URL(_req.url).searchParams.get("installId");
+
+  const formData = installId ? await getConfig(installId, mcp.id) : undefined;
+
+  return { ...props, mcp, formData };
 };
 
 export const action = async (
@@ -50,7 +56,7 @@ export const action = async (
   }
 };
 
-export default function PDP({ mcp, error, installation }: Props) {
+export default function PDP({ mcp, error, installation, formData }: Props) {
   const slot = useId();
   const editorId = useId();
   const schemaId = useId();
@@ -701,6 +707,7 @@ export default function PDP({ mcp, error, installation }: Props) {
           schema={mcp.inputSchema}
           formId="rjsf-form"
           slotId={slot}
+          formData={formData}
         />
       </div>
 

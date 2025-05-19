@@ -2,7 +2,7 @@
   "imports": {
     "$fresh/": "https://deno.land/x/fresh@1.7.3/",
     "@deco/durable": "jsr:@deco/durable@0.5.3",
-    "@deco/mcp": "jsr:@deco/mcp@0.3.9",
+    "@deco/mcp": "jsr:@deco/mcp@0.4.0",
     "@hono/hono": "jsr:@hono/hono@^4.5.4",
     "site/": "./",
     "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.6.1",
@@ -17,7 +17,7 @@
     "apps/": "https://cdn.jsdelivr.net/gh/deco-cx/apps@0.87.0/",
     "@preact/signals": "https://esm.sh/*@preact/signals@1.2.2",
     "@preact/signals-core": "https://esm.sh/*@preact/signals-core@1.5.1",
-    "@deco/htmx": "https://denopkg.com/deco-cx/apps@0.86.1/htmx/mod.ts",
+    "@deco/htmx": "https://denopkg.com/deco-cx/apps@0.87.0/htmx/mod.ts",
     "https://esm.sh/*preact-render-to-string@6.3.1": "npm:preact-render-to-string@6.4.2",
     "@deco/dev": "jsr:@deco/dev@1.116.2",
     "daisyui": "npm:daisyui@4.6.0",
