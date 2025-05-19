@@ -73,11 +73,10 @@ app.get("/oauth/start/:appName", async (c) => {
 
   const returnUrl = reqUrl.searchParams.get("returnUrl");
   const state = StateBuilder.build(appName, installId, returnUrl);
-  redirectUri.searchParams.set("state", state);
   const url = new URL(
     `/live/invoke/${await getApp(
       instance,
-    )}${OAUTH_START_LOADER}?installId=${installId}&appName=${appName}&redirectUri=${redirectUri}`,
+    )}${OAUTH_START_LOADER}?installId=${installId}&appName=${appName}&redirectUri=${redirectUri}&state=${state}`,
     c.req.url,
   );
   returnUrl && url.searchParams.set("returnUrl", returnUrl);
