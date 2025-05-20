@@ -1,7 +1,7 @@
 import { Context } from "@deco/deco";
 import { Hono } from "@hono/hono";
+import { StateBuilder } from "./oauth.ts";
 import { decoInstance, MCP_REGISTRY } from "./registry.ts";
-import { withOAuth } from "./oauth.ts";
 
 const app = new Hono();
 const envPort = Deno.env.get("PORT");
@@ -10,16 +10,27 @@ const APPS_INSTALL_URL = new URLPattern({
   pathname: "/apps/:appName/:installId/*",
 });
 
-withOAuth(app);
-
 app.use("/*", async (ctx) => {
   const url = new URL(ctx.req.url);
   const match = APPS_INSTALL_URL.exec({ pathname: url.pathname });
 
-  const installId = url.searchParams.get("installId") ??
+  let installId = url.searchParams.get("installId") ??
     match?.pathname?.groups?.installId;
-  const appName = url.searchParams.get("appName") ??
+  let appName = url.searchParams.get("appName") ??
     match?.pathname?.groups?.appName;
+
+  // setInstallId to random if appName is specified
+  if (appName && !installId) {
+    installId = crypto.randomUUID();
+  }
+
+  // fromOAuthParams
+  const state = url.searchParams.get("state");
+  if (!appName && !installId && state) {
+    const parsed = StateBuilder.parse(state);
+    appName = parsed.appName;
+    installId = parsed.installId;
+  }
 
   if (appName) {
     const decodedAppName = decodeURIComponent(appName);
