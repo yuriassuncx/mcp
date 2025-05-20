@@ -32,7 +32,8 @@ import * as $$$$$$$$$$$24 from "./apps/deco/vertex.ts";
 import * as $$$$$$$$$$$25 from "./apps/deco/vidu.ts";
 import * as $$$$$$$$$$$26 from "./apps/deco/vnda.ts";
 import * as $$$$$$$$$$$27 from "./apps/deco/vtex.ts";
-import * as $$$$$$$$$$$28 from "./apps/site.ts";
+import * as $$$$$$$$$$$28 from "./apps/google-sheets.ts";
+import * as $$$$$$$$$$$29 from "./apps/site.ts";
 import * as $$$0 from "./loaders/mcps/get.ts";
 import * as $$$1 from "./loaders/mcps/search.ts";
 import * as $$$$$$0 from "./sections/Component.tsx";
@@ -84,7 +85,8 @@ const manifest = {
     "site/apps/deco/vidu.ts": $$$$$$$$$$$25,
     "site/apps/deco/vnda.ts": $$$$$$$$$$$26,
     "site/apps/deco/vtex.ts": $$$$$$$$$$$27,
-    "site/apps/site.ts": $$$$$$$$$$$28,
+    "site/apps/google-sheets.ts": $$$$$$$$$$$28,
+    "site/apps/site.ts": $$$$$$$$$$$29,
   },
   "name": "site",
   "baseUrl": import.meta.url,
