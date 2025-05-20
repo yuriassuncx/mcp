@@ -1,8 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
-import { buildImportMap, Deco, DecoOptions } from "@deco/deco";
+import { buildImportMap, Deco, DecoOptions, DecoRouteState } from "@deco/deco";
 import { fromJSON } from "@deco/deco/engine";
 import { bindings as HTMX } from "@deco/deco/htmx";
 import { mcpServer } from "@deco/mcp";
+import { Context, Hono } from "@hono/hono";
 import { parseArgs } from "jsr:@std/cli/parse-args";
 import { walk } from "jsr:@std/fs";
 import { basename, relative } from "jsr:@std/path";
@@ -11,6 +12,7 @@ import { Layout } from "./_app.tsx";
 import { installStorage } from "./apps/site.ts";
 import manifest, { Manifest } from "./manifest.gen.ts";
 import { middlewaresFor } from "./middleware.ts";
+import { withOAuth } from "./oauth.ts";
 
 const flags = parseArgs(Deno.args, {
   string: ["apps", "static-root"],
@@ -70,37 +72,55 @@ const contexts = new LRUCache<string, Promise<MCPInstance>>({
   updateAgeOnGet: true,
 });
 
-const defaultInstallId = "default";
-
 export interface MCPInstanceOptions {
-  installId?: string | "default";
+  installId?: string;
   appName?: string;
   bindings?: DecoOptions<Manifest>["bindings"];
 }
 
 const configure = manifest["actions"]["site/actions/mcps/configure.ts"].default;
+
+export interface MCPState extends DecoRouteState<any> {
+  Variables: DecoRouteState<any>["Variables"] & {
+    installId: string;
+    appName: string;
+    instance: MCPInstance;
+  };
+}
+
+export const { deco: MCP_REGISTRY } = (await decoInstance({
+  bindings: HTMX<Manifest>({
+    Layout,
+    staticRoot: flags["static-root"],
+  }),
+}))!;
+
 export async function decoInstance(
   { installId, appName, bindings }: MCPInstanceOptions,
 ): Promise<MCPInstance | undefined> {
   let decofile: DecoOptions["decofile"] | undefined = undefined;
 
-  const isDefault = installId === defaultInstallId;
-  installId ??= crypto.randomUUID();
-  let form = await installStorage.getItem(installId);
-  if (form == null && !isDefault) {
-    await configure({
-      id: appName!,
-      installId,
-      props: {},
-    });
+  let form = null;
+  if (installId) {
     form = await installStorage.getItem(installId);
+    if (form == null) {
+      await configure({
+        id: appName!,
+        installId,
+        props: {},
+      });
+      form = await installStorage.getItem(installId);
+    }
   }
-  decofile = isDefault ? undefined : fromJSON(form as Record<string, unknown>);
+
+  decofile = form ? fromJSON(form as Record<string, unknown>) : undefined;
 
   const basePath = appName && installId
     ? `/apps/${encodeURIComponent(appName)}/${installId}`
     : undefined;
 
+  // set installid to default if not set
+  installId ??= "default";
   let instance = contexts.get(installId);
   if (!instance) {
     instance = Deco.init<Manifest>({
@@ -110,7 +130,14 @@ export async function decoInstance(
       bindings: {
         ...bindings ?? {},
         useServer: (deco, hono) => {
-          hono.use("/*", async (c, next) => {
+          // sets default parameters
+          hono.use("/*", async (_c, next) => {
+            const c = _c as unknown as Context<MCPState>;
+            c.set("installId", installId);
+            appName && c.set("appName", appName);
+            const mInstance = await instance;
+            mInstance && c.set("instance", mInstance);
+
             const global = (c.var.global ?? {}) as Record<string, unknown>;
             global.installId = installId;
             global.appName = appName;
@@ -129,6 +156,12 @@ export async function decoInstance(
             c.set("global", global);
             await next();
           });
+
+          withOAuth(
+            hono as unknown as Hono<
+              MCPState
+            >,
+          );
           hono.use(
             "/*",
             mcpServer(
@@ -161,11 +194,3 @@ export async function decoInstance(
 export const cleanInstance = (installId: string) => {
   contexts.delete(installId);
 };
-
-export const { deco: MCP_REGISTRY } = (await decoInstance({
-  installId: defaultInstallId,
-  bindings: HTMX<Manifest>({
-    Layout,
-    staticRoot: flags["static-root"],
-  }),
-}))!;
