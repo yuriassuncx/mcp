@@ -84,6 +84,21 @@ const invoke = async (
   return null;
 };
 
+interface WellKnownOAuthApps {
+  [key: string]: {
+    clientIdKey: string;
+    clientSecretKey: string;
+    scopes?: string;
+  };
+}
+
+const WELL_KNOWN_OAUTH_APPS: WellKnownOAuthApps = {
+  "github": {
+    clientIdKey: "OAUTH_CLIENT_ID_GITHUB",
+    clientSecretKey: "OAUTH_CLIENT_SECRET_GITHUB",
+  },
+};
+
 export const withOAuth = (
   app: Hono<
     MCPState
@@ -107,6 +122,16 @@ export const withOAuth = (
       return c.json({ error: "App not found" }, 404);
     }
 
+    const envVars = env(c);
+    const oauthApp = WELL_KNOWN_OAUTH_APPS[appName.toLowerCase() as keyof typeof WELL_KNOWN_OAUTH_APPS];
+
+    if (!oauthApp) {
+      return c.json({ error: `App ${appName} not found` }, 404);
+    }
+
+    const clientId = envVars[oauthApp.clientIdKey];
+    const scopes = oauthApp.scopes;
+
     const state = StateBuilder.build(appName, installId, invokeApp, returnUrl);
     const oauthStartLoader = `${invokeApp}${OAUTH_START_LOADER}`;
     const props = {
@@ -115,6 +140,8 @@ export const withOAuth = (
       redirectUri,
       state,
       returnUrl,
+      clientId,
+      scopes,
     };
 
     return await invoke(oauthStartLoader, props, c) ??
@@ -131,14 +158,10 @@ export const withOAuth = (
     );
 
     const envVars = env(c);
+    const oauthApp = WELL_KNOWN_OAUTH_APPS[appName.toLowerCase() as keyof typeof WELL_KNOWN_OAUTH_APPS];
 
-    const mapClientSecret = {
-      "github": envVars.OAUTH_CLIENT_SECRET_GITHUB,
-    } as const;
-
-    const clientSecret = mapClientSecret[appName.toLowerCase() as keyof typeof mapClientSecret];
-    if (!clientSecret) {
-      return c.json({ error: "Client secret not found" }, 404);
+    if (!oauthApp) {
+      return c.json({ error: `App ${appName} not found` }, 404);
     }
 
     const oauthCallbackAction = `${invokeApp}${OAUTH_CALLBACK_ACTION}`;
@@ -148,7 +171,8 @@ export const withOAuth = (
       code: c.req.query("code"),
       state,
       returnUrl,
-      clientSecret,
+      clientId: envVars[oauthApp.clientIdKey],
+      clientSecret: envVars[oauthApp.clientSecretKey],
     };
     const response = await invoke(oauthCallbackAction, props, c);
     if (!response) {
