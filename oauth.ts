@@ -3,6 +3,7 @@ import { Context } from "@deco/deco";
 import { getTools } from "@deco/mcp";
 import { Context as HonoContext, Hono } from "@hono/hono";
 import { MCPInstance, MCPState } from "./registry.ts";
+import { env } from "@hono/hono/adapter";
 
 const OAUTH_START_LOADER = "/loaders/oauth/start.ts";
 const OAUTH_CALLBACK_ACTION = "/actions/oauth/callback.ts";
@@ -105,6 +106,7 @@ export const withOAuth = (
     if (!invokeApp) {
       return c.json({ error: "App not found" }, 404);
     }
+
     const state = StateBuilder.build(appName, installId, invokeApp, returnUrl);
     const oauthStartLoader = `${invokeApp}${OAUTH_START_LOADER}`;
     const props = {
@@ -128,6 +130,17 @@ export const withOAuth = (
       state,
     );
 
+    const envVars = env(c);
+
+    const mapClientSecret = {
+      "github": envVars.OAUTH_CLIENT_SECRET_GITHUB,
+    } as const;
+
+    const clientSecret = mapClientSecret[appName.toLowerCase() as keyof typeof mapClientSecret];
+    if (!clientSecret) {
+      return c.json({ error: "Client secret not found" }, 404);
+    }
+
     const oauthCallbackAction = `${invokeApp}${OAUTH_CALLBACK_ACTION}`;
     const props = {
       installId,
@@ -135,6 +148,7 @@ export const withOAuth = (
       code: c.req.query("code"),
       state,
       returnUrl,
+      clientSecret,
     };
     const response = await invoke(oauthCallbackAction, props, c);
     if (!response) {
