@@ -175,6 +175,19 @@ export const withOAuth = (
       clientSecret: envVars[oauthApp.clientSecretKey],
     };
     const response = await invoke(oauthCallbackAction, props, c);
+
+    if (response && returnUrl) {
+      const { installId } = await response.json();
+      const thisUrl = new URL(c.req.url);
+      thisUrl.protocol = "https:";
+      if (thisUrl.hostname === "localhost") {
+        thisUrl.protocol = "http:";
+      }
+      const url = new URL(returnUrl);
+      url.searchParams.set("mcpUrl", `${thisUrl.origin}/apps/${appName}/${installId}/mcp/messages`);
+      return c.redirect(url.toString());
+    }
+
     if (!response) {
       return c.html(
         "<html><body>Success! You may close this window.</body></html>",
