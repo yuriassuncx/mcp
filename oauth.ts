@@ -114,6 +114,11 @@ export const withOAuth = (
       c.req.url,
     );
 
+    redirectUri.protocol = "https:";
+    if (redirectUri.hostname === "localhost") {
+      redirectUri.protocol = "http:";
+    }
+
     const returnUrl = reqUrl.searchParams.get("returnUrl");
     const invokeApp = await findOAuthCompatibleApp(
       c.var.instance,
