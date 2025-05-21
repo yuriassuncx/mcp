@@ -3,6 +3,7 @@ import { Context } from "@deco/deco";
 import { getTools } from "@deco/mcp";
 import { Context as HonoContext, Hono } from "@hono/hono";
 import { MCPInstance, MCPState } from "./registry.ts";
+import { env } from "@hono/hono/adapter";
 
 const OAUTH_START_LOADER = "/loaders/oauth/start.ts";
 const OAUTH_CALLBACK_ACTION = "/actions/oauth/callback.ts";
@@ -83,6 +84,21 @@ const invoke = async (
   return null;
 };
 
+interface WellKnownOAuthApps {
+  [key: string]: {
+    clientIdKey: string;
+    clientSecretKey: string;
+    scopes?: string;
+  };
+}
+
+const WELL_KNOWN_OAUTH_APPS: WellKnownOAuthApps = {
+  "github": {
+    clientIdKey: "OAUTH_CLIENT_ID_GITHUB",
+    clientSecretKey: "OAUTH_CLIENT_SECRET_GITHUB",
+  },
+};
+
 export const withOAuth = (
   app: Hono<
     MCPState
@@ -98,6 +114,11 @@ export const withOAuth = (
       c.req.url,
     );
 
+    redirectUri.protocol = "https:";
+    if (redirectUri.hostname === "localhost") {
+      redirectUri.protocol = "http:";
+    }
+
     const returnUrl = reqUrl.searchParams.get("returnUrl");
     const invokeApp = await findOAuthCompatibleApp(
       c.var.instance,
@@ -105,6 +126,17 @@ export const withOAuth = (
     if (!invokeApp) {
       return c.json({ error: "App not found" }, 404);
     }
+
+    const envVars = env(c);
+    const oauthApp = WELL_KNOWN_OAUTH_APPS[appName.toLowerCase() as keyof typeof WELL_KNOWN_OAUTH_APPS];
+
+    if (!oauthApp) {
+      return c.json({ error: `App ${appName} not found` }, 404);
+    }
+
+    const clientId = envVars[oauthApp.clientIdKey];
+    const scopes = oauthApp.scopes;
+
     const state = StateBuilder.build(appName, installId, invokeApp, returnUrl);
     const oauthStartLoader = `${invokeApp}${OAUTH_START_LOADER}`;
     const props = {
@@ -113,6 +145,8 @@ export const withOAuth = (
       redirectUri,
       state,
       returnUrl,
+      clientId,
+      scopes,
     };
 
     return await invoke(oauthStartLoader, props, c) ??
@@ -128,6 +162,13 @@ export const withOAuth = (
       state,
     );
 
+    const envVars = env(c);
+    const oauthApp = WELL_KNOWN_OAUTH_APPS[appName.toLowerCase() as keyof typeof WELL_KNOWN_OAUTH_APPS];
+
+    if (!oauthApp) {
+      return c.json({ error: `App ${appName} not found` }, 404);
+    }
+
     const oauthCallbackAction = `${invokeApp}${OAUTH_CALLBACK_ACTION}`;
     const props = {
       installId,
@@ -135,8 +176,23 @@ export const withOAuth = (
       code: c.req.query("code"),
       state,
       returnUrl,
+      clientId: envVars[oauthApp.clientIdKey],
+      clientSecret: envVars[oauthApp.clientSecretKey],
     };
     const response = await invoke(oauthCallbackAction, props, c);
+
+    if (response && returnUrl) {
+      const { installId } = await response.json();
+      const thisUrl = new URL(c.req.url);
+      thisUrl.protocol = "https:";
+      if (thisUrl.hostname === "localhost") {
+        thisUrl.protocol = "http:";
+      }
+      const url = new URL(returnUrl);
+      url.searchParams.set("mcpUrl", `${thisUrl.origin}/apps/${appName}/${installId}/mcp/messages`);
+      return c.redirect(url.toString());
+    }
+
     if (!response) {
       return c.html(
         "<html><body>Success! You may close this window.</body></html>",
