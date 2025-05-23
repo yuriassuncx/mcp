@@ -26,24 +26,16 @@ export const middlewaresFor = (
       async (req, next) => {
         if (req.params.name === configureMcpTool) {
           return {
-            content: [{
-              type: "text",
-              text: JSON.stringify(
-                await configure({
-                  id: appName,
-                  installId,
-                  props: req.params.arguments!,
-                }),
-              ),
-            }],
+            structuredContent: await configure({
+              id: appName,
+              installId,
+              props: req.params.arguments!,
+            }),
           };
         }
         if (req.params.name === checkConfigurationTool) {
           return {
-            content: [{
-              type: "text",
-              text: JSON.stringify(await checkConfiguration({ installId })),
-            }],
+            structuredContent: await checkConfiguration({ installId }),
           };
         }
         return next!();
@@ -77,7 +69,7 @@ export const middlewaresFor = (
         } as Tool, {
           name: configureMcpTool,
           description: "Configure the MCP, input is the configuration",
-          inputSchema,
+          inputSchema: inputSchema || { type: "object" },
           outputSchema: {
             type: "object",
           },
