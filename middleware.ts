@@ -69,7 +69,7 @@ export const middlewaresFor = (
         } as Tool, {
           name: configureMcpTool,
           description: "Configure the MCP, input is the configuration",
-          inputSchema,
+          inputSchema: inputSchema || { type: "object" },
           outputSchema: {
             type: "object",
           },
