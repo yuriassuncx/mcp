@@ -114,11 +114,10 @@ const extractProviderFromAppName = (appName: string): string | null => {
   for (const provider of knownProviders) {
     if (normalizedName.startsWith(provider)) {
       const afterProvider = normalizedName.substring(provider.length);
-      if (
-        afterProvider === "" || afterProvider.startsWith("-") ||
-        afterProvider.startsWith("_") ||
-        /^[A-Z]/.test(appName.substring(provider.length))
-      ) {
+      const hasSeparator = afterProvider.startsWith("-") || afterProvider.startsWith("_");
+      const hasUppercase = /^[A-Z]/.test(appName.substring(provider.length));
+
+      if (afterProvider === "" || hasSeparator || hasUppercase) {
         return provider;
       }
     }
