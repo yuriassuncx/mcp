@@ -97,6 +97,38 @@ const WELL_KNOWN_OAUTH_APPS: WellKnownOAuthApps = {
     clientIdKey: "OAUTH_CLIENT_ID_GITHUB",
     clientSecretKey: "OAUTH_CLIENT_SECRET_GITHUB",
   },
+  "google": {
+    clientIdKey: "OAUTH_CLIENT_ID_GOOGLE",
+    clientSecretKey: "OAUTH_CLIENT_SECRET_GOOGLE",
+  },
+};
+
+const extractProviderFromAppName = (appName: string): string | null => {
+  const normalizedName = appName.toLowerCase();
+  const knownProviders = Object.keys(WELL_KNOWN_OAUTH_APPS);
+
+  if (knownProviders.includes(normalizedName)) {
+    return normalizedName;
+  }
+
+  for (const provider of knownProviders) {
+    if (normalizedName.startsWith(provider)) {
+      const afterProvider = normalizedName.substring(provider.length);
+      const hasSeparator = afterProvider.startsWith("-") || afterProvider.startsWith("_");
+      const hasUppercase = /^[A-Z]/.test(appName.substring(provider.length));
+
+      if (afterProvider === "" || hasSeparator || hasUppercase) {
+        return provider;
+      }
+    }
+  }
+
+  return null;
+};
+
+const getOAuthConfigForApp = (appName: string) => {
+  const provider = extractProviderFromAppName(appName);
+  return provider ? WELL_KNOWN_OAUTH_APPS[provider] : null;
 };
 
 export const withOAuth = (
@@ -115,9 +147,6 @@ export const withOAuth = (
     );
 
     redirectUri.protocol = "https:";
-    if (redirectUri.hostname === "localhost") {
-      redirectUri.protocol = "http:";
-    }
 
     const returnUrl = reqUrl.searchParams.get("returnUrl");
     const invokeApp = await findOAuthCompatibleApp(
@@ -128,10 +157,10 @@ export const withOAuth = (
     }
 
     const envVars = env(c);
-    const oauthApp = WELL_KNOWN_OAUTH_APPS[appName.toLowerCase() as keyof typeof WELL_KNOWN_OAUTH_APPS];
+    const oauthApp = getOAuthConfigForApp(appName);
 
     if (!oauthApp) {
-      return c.json({ error: `App ${appName} not found` }, 404);
+      return c.json({ error: `App ${appName} not supported` }, 404);
     }
 
     const clientId = envVars[oauthApp.clientIdKey];
@@ -163,7 +192,8 @@ export const withOAuth = (
     );
 
     const envVars = env(c);
-    const oauthApp = WELL_KNOWN_OAUTH_APPS[appName.toLowerCase() as keyof typeof WELL_KNOWN_OAUTH_APPS];
+
+    const oauthApp = getOAuthConfigForApp(appName);
 
     if (!oauthApp) {
       return c.json({ error: `App ${appName} not found` }, 404);
@@ -189,7 +219,10 @@ export const withOAuth = (
         thisUrl.protocol = "http:";
       }
       const url = new URL(returnUrl);
-      url.searchParams.set("mcpUrl", `${thisUrl.origin}/apps/${appName}/${installId}/mcp/messages`);
+      url.searchParams.set(
+        "mcpUrl",
+        new URL(`/apps/${appName}/${installId}/mcp/messages`, thisUrl.origin).href,
+      );
       return c.redirect(url.toString());
     }
 
