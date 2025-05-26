@@ -222,7 +222,7 @@ export const withOAuth = (
       const url = new URL(returnUrl);
       url.searchParams.set(
         "mcpUrl",
-        `${thisUrl.origin}/apps/${appName}/${installId}/mcp/messages`,
+        new URL(`/apps/${appName}/${installId}/mcp/messages`, thisUrl.origin).href,
       );
       return c.redirect(url.toString());
     }
