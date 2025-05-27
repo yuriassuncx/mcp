@@ -38,6 +38,17 @@ const findOAuthCompatibleApp = async (
     : undefined;
 };
 
+interface StateProvider {
+  original_state?: string;
+  code_verifier?: string;
+}
+interface State {
+  appName: string;
+  installId: string;
+  invokeApp: string;
+  returnUrl?: string | null;
+}
+
 export const StateBuilder = {
   build: (
     appName: string,
@@ -52,14 +63,15 @@ export const StateBuilder = {
       returnUrl,
     })));
   },
-  parse: (state: string): {
-    appName: string;
-    installId: string;
-    invokeApp: string;
-    returnUrl?: string | null;
-  } => {
+  parse: (state: string): State & StateProvider => {
     const decoded = atob(decodeURIComponent(state));
-    return JSON.parse(decoded);
+    const parsed = JSON.parse(decoded) as State & StateProvider;
+
+    if (parsed.original_state) {
+      return StateBuilder.parse(parsed.original_state);
+    }
+    
+    return parsed;
   },
 };
 
@@ -101,10 +113,14 @@ const WELL_KNOWN_OAUTH_APPS: WellKnownOAuthApps = {
     clientIdKey: "OAUTH_CLIENT_ID_GOOGLE",
     clientSecretKey: "OAUTH_CLIENT_SECRET_GOOGLE",
   },
+  "airtable": {
+    clientIdKey: "OAUTH_CLIENT_ID_AIRTABLE",
+    clientSecretKey: "OAUTH_CLIENT_SECRET_AIRTABLE",
+  },
 };
 
 const extractProviderFromAppName = (appName: string): string | null => {
-  const normalizedName = appName.toLowerCase();
+  const normalizedName = appName?.toLowerCase();
   const knownProviders = Object.keys(WELL_KNOWN_OAUTH_APPS);
 
   if (knownProviders.includes(normalizedName)) {
@@ -112,10 +128,10 @@ const extractProviderFromAppName = (appName: string): string | null => {
   }
 
   for (const provider of knownProviders) {
-    if (normalizedName.startsWith(provider)) {
+    if (normalizedName?.startsWith(provider)) {
       const afterProvider = normalizedName.substring(provider.length);
-      const hasSeparator = afterProvider.startsWith("-") || afterProvider.startsWith("_");
-      const hasUppercase = /^[A-Z]/.test(appName.substring(provider.length));
+      const hasSeparator = afterProvider?.startsWith("-") || afterProvider?.startsWith("_");
+      const hasUppercase = /^[A-Z]/.test(appName?.substring(provider.length));
 
       if (afterProvider === "" || hasSeparator || hasUppercase) {
         return provider;
@@ -152,6 +168,7 @@ export const withOAuth = (
     const invokeApp = await findOAuthCompatibleApp(
       c.var.instance,
     );
+
     if (!invokeApp) {
       return c.json({ error: "App not found" }, 404);
     }
