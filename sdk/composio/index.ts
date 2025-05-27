@@ -57,7 +57,7 @@ export const get = (id: string) => {
 };
 
 const getInstanceId = async (name: string) => {
-  const targetUrl = new URL(`/${name}/`, MCP_URL);
+  const targetUrl = new URL(`/${name}`, MCP_URL);
   const response = await fetch(targetUrl, {
     headers: { "accept": "text/html" },
     redirect: "manual",
