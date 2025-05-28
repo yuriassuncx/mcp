@@ -9,7 +9,7 @@ import { walk } from "jsr:@std/fs";
 import { basename, relative } from "jsr:@std/path";
 import { LRUCache } from "lru-cache";
 import { Layout } from "./_app.tsx";
-import { installStorage } from "./apps/site.ts";
+import { appStorage, installStorage } from "./apps/site.ts";
 import { withBindings } from "./binding.ts";
 import manifest, { Manifest } from "./manifest.gen.ts";
 import { middlewaresFor } from "./middleware.ts";
@@ -142,6 +142,9 @@ export async function decoInstance(
             const global = (c.var.global ?? {}) as Record<string, unknown>;
             global.installId = installId;
             global.appName = appName;
+            if (appName) {
+              global.appStorage = appStorage(appName);
+            }
             global.configure = (props: Record<string, unknown>) =>
               configure({
                 id: appName!,

@@ -38,7 +38,7 @@ export const getConfig = async (
   const config = typeof installIdOrConfig === "string"
     ? await installStorage.getItem<Record<string, any>>(installIdOrConfig)
     : installIdOrConfig;
-  const { __resolveType: _, ...configData } = config[integrationId];
+  const { __resolveType: _, ...configData } = config?.[integrationId];
   return configData;
 };
 /**

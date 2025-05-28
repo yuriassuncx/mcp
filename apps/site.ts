@@ -35,6 +35,31 @@ export const installStorage: Storage = {
     return Promise.resolve();
   },
 };
+
+export const appStorage: (appName: string) => Storage = (appName) => ({
+  async getItem<T>(key: string) {
+    const kv = await Deno.openKv();
+    const result = await kv.get<T>(["appstorage", appName, key]);
+    kv.close();
+    return result.value;
+  },
+  async setItem<T>(key: string, value: T) {
+    const kv = await Deno.openKv();
+    await kv.set(["appstorage", appName, key], value);
+    kv.close();
+    cleanInstance(key);
+
+    return Promise.resolve();
+  },
+  async removeItem(key: string) {
+    const kv = await Deno.openKv();
+    await kv.delete(["appstorage", appName, key]);
+    kv.close();
+    cleanInstance(key);
+
+    return Promise.resolve();
+  },
+});
 /**
  * @name main
  * @internal true
