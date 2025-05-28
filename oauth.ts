@@ -15,6 +15,7 @@ interface State {
   installId: string;
   invokeApp: string;
   returnUrl?: string | null;
+  redirectUri?: string | null;
 }
 
 export const StateBuilder = {
@@ -23,12 +24,14 @@ export const StateBuilder = {
     installId: string,
     invokeApp: string,
     returnUrl?: string | null,
+    redirectUri?: string | null,
   ) => {
     return encodeURIComponent(btoa(JSON.stringify({
       appName,
       installId,
       invokeApp,
       returnUrl,
+      redirectUri,
     })));
   },
   parse: (state: string): State & StateProvider => {
@@ -111,7 +114,7 @@ export const withOAuth = (
     const reqUrl = new URL(c.req.url);
     const redirectUri = new URL(
       `/oauth/callback`,
-      c.req.url,
+      new URL(c.req.url).origin,
     );
 
     redirectUri.protocol = "https:";
@@ -136,7 +139,13 @@ export const withOAuth = (
     const clientId = envVars[oauthApp.clientIdKey];
     const scopes = oauthApp.scopes;
 
-    const state = StateBuilder.build(appName, installId, invokeApp, returnUrl);
+    const state = StateBuilder.build(
+      appName,
+      installId,
+      invokeApp,
+      returnUrl,
+      redirectUri.href,
+    );
     const oauthStartLoader = `${invokeApp}${OAUTH_START_LOADER}`;
     const props = {
       installId,
@@ -157,9 +166,10 @@ export const withOAuth = (
       return c.json({ error: "State is required" }, 400);
     }
 
-    const { appName, installId, invokeApp, returnUrl } = StateBuilder.parse(
-      state,
-    );
+    const { appName, installId, invokeApp, returnUrl, redirectUri } =
+      StateBuilder.parse(
+        state,
+      );
 
     const envVars = env(c);
 
@@ -176,6 +186,7 @@ export const withOAuth = (
       code: c.req.query("code"),
       state,
       returnUrl,
+      redirectUri,
       clientId: envVars[oauthApp.clientIdKey],
       clientSecret: envVars[oauthApp.clientSecretKey],
     };
