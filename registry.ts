@@ -157,6 +157,7 @@ export async function decoInstance(
               }
               const { [appName]: config } = form as any ??
                 {};
+              console.log({ form, appName, config });
               const { __resolveType: _, ...props } = config ?? {};
               return props;
             };
