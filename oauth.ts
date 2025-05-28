@@ -117,6 +117,11 @@ const WELL_KNOWN_OAUTH_APPS: WellKnownOAuthApps = {
     clientIdKey: "OAUTH_CLIENT_ID_AIRTABLE",
     clientSecretKey: "OAUTH_CLIENT_SECRET_AIRTABLE",
   },
+  "slack": {
+    clientIdKey: "OAUTH_CLIENT_ID_SLACK",
+    clientSecretKey: "OAUTH_CLIENT_SECRET_SLACK",
+  },
+
 };
 
 const extractProviderFromAppName = (appName: string): string | null => {
