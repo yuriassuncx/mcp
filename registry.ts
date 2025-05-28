@@ -10,6 +10,7 @@ import { basename, relative } from "jsr:@std/path";
 import { LRUCache } from "lru-cache";
 import { Layout } from "./_app.tsx";
 import { installStorage } from "./apps/site.ts";
+import { withBindings } from "./binding.ts";
 import manifest, { Manifest } from "./manifest.gen.ts";
 import { middlewaresFor } from "./middleware.ts";
 import { withOAuth } from "./oauth.ts";
@@ -157,10 +158,14 @@ export async function decoInstance(
             await next();
           });
 
+          const mcp = hono as unknown as Hono<
+            MCPState
+          >;
+          withBindings(
+            mcp,
+          );
           withOAuth(
-            hono as unknown as Hono<
-              MCPState
-            >,
+            mcp,
           );
           hono.use(
             "/*",

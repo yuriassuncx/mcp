@@ -1,42 +1,10 @@
-// deno-lint-ignore-file no-explicit-any
-import { Context } from "@deco/deco";
-import { getTools } from "@deco/mcp";
-import { Context as HonoContext, Hono } from "@hono/hono";
-import { MCPInstance, MCPState } from "./registry.ts";
+import { Hono } from "@hono/hono";
 import { env } from "@hono/hono/adapter";
+import { MCPState } from "./registry.ts";
+import { findCompatibleApp, invoke } from "./utils.ts";
 
 const OAUTH_START_LOADER = "/loaders/oauth/start.ts";
 const OAUTH_CALLBACK_ACTION = "/actions/oauth/callback.ts";
-
-const findOAuthCompatibleApp = async (
-  instance: MCPInstance,
-) => {
-  const names = new Map<string, string>();
-  const run = Context.bind(instance.deco.ctx, async () => {
-    return await instance.deco.meta();
-  });
-  const schemas = await run();
-
-  const tools = getTools(
-    names,
-    schemas?.value.schema,
-    { blocks: ["loaders"] },
-    schemas?.value?.manifest?.blocks?.apps,
-  );
-
-  const loader = tools.find((t) =>
-    t.resolveType.endsWith(OAUTH_START_LOADER)
-  ) as
-    | { resolveType: string }
-    | undefined;
-
-  return loader
-    ? loader.resolveType.substring(
-      0,
-      loader.resolveType.length - OAUTH_START_LOADER.length,
-    )
-    : undefined;
-};
 
 interface StateProvider {
   original_state?: string;
@@ -70,30 +38,9 @@ export const StateBuilder = {
     if (parsed.original_state) {
       return StateBuilder.parse(parsed.original_state);
     }
-    
+
     return parsed;
   },
-};
-
-const invoke = async (
-  key: string,
-  props: any,
-  c: HonoContext<MCPState>,
-): Promise<Response | null> => {
-  const response: unknown = await c.var.invoke(key, props);
-  if (response instanceof Response) {
-    return response;
-  }
-
-  if (typeof response === "string") {
-    return c.text(response);
-  }
-
-  if (typeof response === "object") {
-    return c.json(response);
-  }
-
-  return null;
 };
 
 interface WellKnownOAuthApps {
@@ -135,7 +82,8 @@ const extractProviderFromAppName = (appName: string): string | null => {
   for (const provider of knownProviders) {
     if (normalizedName?.startsWith(provider)) {
       const afterProvider = normalizedName.substring(provider.length);
-      const hasSeparator = afterProvider?.startsWith("-") || afterProvider?.startsWith("_");
+      const hasSeparator = afterProvider?.startsWith("-") ||
+        afterProvider?.startsWith("_");
       const hasUppercase = /^[A-Z]/.test(appName?.substring(provider.length));
 
       if (afterProvider === "" || hasSeparator || hasUppercase) {
@@ -170,8 +118,9 @@ export const withOAuth = (
     redirectUri.protocol = "https:";
 
     const returnUrl = reqUrl.searchParams.get("returnUrl");
-    const invokeApp = await findOAuthCompatibleApp(
+    const invokeApp = await findCompatibleApp(
       c.var.instance,
+      OAUTH_START_LOADER,
     );
 
     if (!invokeApp) {
@@ -243,7 +192,8 @@ export const withOAuth = (
       const url = new URL(returnUrl);
       url.searchParams.set(
         "mcpUrl",
-        new URL(`/apps/${appName}/${installId}/mcp/messages`, thisUrl.origin).href,
+        new URL(`/apps/${appName}/${installId}/mcp/messages`, thisUrl.origin)
+          .href,
       );
       return c.redirect(url.toString());
     }
