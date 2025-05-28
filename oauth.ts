@@ -114,7 +114,7 @@ export const withOAuth = (
     const reqUrl = new URL(c.req.url);
     const redirectUri = new URL(
       `/oauth/callback`,
-      new URL(c.req.url).origin,
+      c.req.url,
     );
 
     redirectUri.protocol = "https:";
