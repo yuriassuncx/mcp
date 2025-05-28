@@ -151,13 +151,16 @@ export async function decoInstance(
                 installId,
                 props,
               });
-            global.getConfiguration = () => {
+            global.getConfiguration = async (installId?: string) => {
               if (!appName) {
                 return {};
               }
-              const { [appName]: config } = form as any ??
+              let currentForm = form;
+              if (installId) {
+                currentForm = await installStorage.getItem(installId);
+              }
+              const { [appName]: config } = currentForm as any ??
                 {};
-              console.log({ form, appName, config });
               const { __resolveType: _, ...props } = config ?? {};
               return props;
             };
