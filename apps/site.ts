@@ -11,25 +11,21 @@ export interface Storage {
 export interface State {
   installStorage: Storage;
 }
+const kv = await Deno.openKv();
+
 export const installStorage: Storage = {
   async getItem<T>(key: string) {
-    const kv = await Deno.openKv();
     const result = await kv.get<T>(["storage", key]);
-    await kv.close();
     return result.value;
   },
   async setItem<T>(key: string, value: T) {
-    const kv = await Deno.openKv();
     await kv.set(["storage", key], value);
-    await kv.close();
     cleanInstance(key);
 
     return Promise.resolve();
   },
   async removeItem(key: string) {
-    const kv = await Deno.openKv();
     await kv.delete(["storage", key]);
-    await kv.close();
     cleanInstance(key);
 
     return Promise.resolve();
@@ -38,23 +34,17 @@ export const installStorage: Storage = {
 
 export const appStorage: (appName: string) => Storage = (appName) => ({
   async getItem<T>(key: string) {
-    const kv = await Deno.openKv();
     const result = await kv.get<T>(["appstorage", appName, key]);
-    kv.close();
     return result.value;
   },
   async setItem<T>(key: string, value: T) {
-    const kv = await Deno.openKv();
     await kv.set(["appstorage", appName, key], value);
-    kv.close();
     cleanInstance(key);
 
     return Promise.resolve();
   },
   async removeItem(key: string) {
-    const kv = await Deno.openKv();
     await kv.delete(["appstorage", appName, key]);
-    kv.close();
     cleanInstance(key);
 
     return Promise.resolve();
