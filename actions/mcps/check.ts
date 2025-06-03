@@ -79,6 +79,6 @@ export default async function checkConfiguration(
     success: validate(configData),
     errors: validate.errors?.map((e) => e.message ?? e.keyword) ?? [],
     inputSchema: schema,
-    config: configData, // this should be masked.
+    // config: configData, // this should be masked.
   };
 }
