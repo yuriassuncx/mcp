@@ -1,7 +1,6 @@
 import { type App, type AppContext as AC } from "@deco/deco";
 import { default as website, Props as WebsiteProps } from "apps/website/mod.ts";
 import manifest, { Manifest } from "../manifest.gen.ts";
-import { cleanInstance } from "../registry.ts";
 
 export interface Storage {
   getItem<T = unknown>(key: string): Promise<T | null>;
@@ -20,13 +19,11 @@ export const installStorage: Storage = {
   },
   async setItem<T>(key: string, value: T) {
     await kv.set(["storage", key], value);
-    cleanInstance(key);
 
     return Promise.resolve();
   },
   async removeItem(key: string) {
     await kv.delete(["storage", key]);
-    cleanInstance(key);
 
     return Promise.resolve();
   },
@@ -39,13 +36,11 @@ export const appStorage: (appName: string) => Storage = (appName) => ({
   },
   async setItem<T>(key: string, value: T) {
     await kv.set(["appstorage", appName, key], value);
-    cleanInstance(key);
 
     return Promise.resolve();
   },
   async removeItem(key: string) {
     await kv.delete(["appstorage", appName, key]);
-    cleanInstance(key);
 
     return Promise.resolve();
   },

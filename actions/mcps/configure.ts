@@ -1,8 +1,7 @@
-import { MCP } from "../../loaders/mcps/search.ts";
-import { type ComposioMCP, install } from "../../sdk/composio/index.ts";
 import { installStorage } from "../../apps/site.ts";
 import getMCP from "../../loaders/mcps/get.ts";
-import { cleanInstance } from "../../registry.ts";
+import { MCP } from "../../loaders/mcps/search.ts";
+import { type ComposioMCP, install } from "../../sdk/composio/index.ts";
 export interface Props {
   /**
    * @description The id of the MCP to install
@@ -83,7 +82,6 @@ const configureDeco = async (
 
   const url = new URL(`/apps/${id}/${installId}/mcp/messages`, MY_DOMAIN);
 
-  cleanInstance(installId);
   await installStorage.setItem(installId, {
     [id]: { ...config, __resolveType: resolveType },
   });
