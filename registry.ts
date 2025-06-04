@@ -7,7 +7,6 @@ import { Context, Hono } from "@hono/hono";
 import { parseArgs } from "jsr:@std/cli/parse-args";
 import { walk } from "jsr:@std/fs";
 import { basename, relative } from "jsr:@std/path";
-import { LRUCache } from "lru-cache";
 import { Layout } from "./_app.tsx";
 import { appStorage, installStorage } from "./apps/site.ts";
 import { withChannelHooks } from "./channels.ts";
@@ -67,12 +66,6 @@ export interface MCPInstance {
   deco: Deco<Manifest>;
 }
 
-const contexts = new LRUCache<string, Promise<MCPInstance>>({
-  max: 100,
-  ttl: 1000 * 60 * 60,
-  updateAgeOnGet: true,
-});
-
 export interface MCPInstanceOptions {
   installId?: string;
   appName?: string;
@@ -112,7 +105,6 @@ export async function decoInstance(
       });
       form = await installStorage.getItem(installId);
     }
-    console.log({ installId, appName, form, loaded: contexts.has(installId) });
   }
 
   decofile = form ? fromJSON(form as Record<string, unknown>) : undefined;
@@ -121,92 +113,83 @@ export async function decoInstance(
     ? `/apps/${encodeURIComponent(appName)}/${installId}`
     : undefined;
 
-  // set installid to default if not set
   installId ??= "default";
-  let instance = contexts.get(installId);
-  if (!instance) {
-    instance = Deco.init<Manifest>({
-      manifest,
-      importMap,
-      decofile,
-      bindings: {
-        ...bindings ?? {},
-        useServer: (deco, hono) => {
-          // sets default parameters
-          hono.use("/*", async (_c, next) => {
-            const c = _c as unknown as Context<MCPState>;
-            c.set("installId", installId);
-            appName && c.set("appName", appName);
-            const mInstance = await instance;
-            mInstance && c.set("instance", mInstance);
+  const instance = Deco.init<Manifest>({
+    manifest,
+    importMap,
+    decofile,
+    bindings: {
+      ...bindings ?? {},
+      useServer: (deco, hono) => {
+        // sets default parameters
+        hono.use("/*", async (_c, next) => {
+          const c = _c as unknown as Context<MCPState>;
+          c.set("installId", installId);
+          appName && c.set("appName", appName);
+          const mInstance = await instance;
+          mInstance && c.set("instance", mInstance);
 
-            const global = (c.var.global ?? {}) as Record<string, unknown>;
-            global.installId = installId;
-            global.appName = appName;
-            if (appName) {
-              global.appStorage = appStorage(appName);
+          const global = (c.var.global ?? {}) as Record<string, unknown>;
+          global.installId = installId;
+          global.appName = appName;
+          if (appName) {
+            global.appStorage = appStorage(appName);
+          }
+          global.configure = (props: Record<string, unknown>) =>
+            configure({
+              id: appName!,
+              installId,
+              props,
+            });
+          global.getConfiguration = async (installId?: string) => {
+            if (!appName) {
+              return {};
             }
-            global.configure = (props: Record<string, unknown>) =>
-              configure({
-                id: appName!,
-                installId,
-                props,
-              });
-            global.getConfiguration = async (installId?: string) => {
-              if (!appName) {
-                return {};
-              }
-              let currentForm = form;
-              if (installId) {
-                currentForm = await installStorage.getItem(installId);
-              }
-              const { [appName]: config } = currentForm as any ??
-                {};
-              const { __resolveType: _, ...props } = config ?? {};
-              return props;
-            };
-            c.set("global", global);
-            await next();
-          });
+            let currentForm = form;
+            if (installId) {
+              currentForm = await installStorage.getItem(installId);
+            }
+            const { [appName]: config } = currentForm as any ??
+              {};
+            const { __resolveType: _, ...props } = config ?? {};
+            return props;
+          };
+          c.set("global", global);
+          await next();
+        });
 
-          const mcp = hono as unknown as Hono<
-            MCPState
-          >;
-          withChannelHooks(
-            mcp,
-          );
-          withOAuth(
-            mcp,
-          );
-          hono.use(
-            "/*",
-            mcpServer(
-              deco,
-              appName && installId
-                ? {
-                  middlewares: middlewaresFor({ appName, installId }),
-                  basePath,
-                }
-                : {
-                  include: [
-                    "site/loaders/mcps/search.ts" as const,
-                    "site/actions/mcps/configure.ts" as const,
-                    "site/actions/mcps/check.ts" as const,
-                  ],
-                },
-            ),
-          ); // some type errors may occur
-        },
+        const mcp = hono as unknown as Hono<
+          MCPState
+        >;
+        withChannelHooks(
+          mcp,
+        );
+        withOAuth(
+          mcp,
+        );
+        hono.use(
+          "/*",
+          mcpServer(
+            deco,
+            appName && installId
+              ? {
+                middlewares: middlewaresFor({ appName, installId }),
+                basePath,
+              }
+              : {
+                include: [
+                  "site/loaders/mcps/search.ts" as const,
+                  "site/actions/mcps/configure.ts" as const,
+                  "site/actions/mcps/check.ts" as const,
+                ],
+              },
+          ),
+        ); // some type errors may occur
       },
-    }).then((deco) => ({
-      deco,
-    }));
-    contexts.set(installId, instance);
-  }
+    },
+  }).then((deco) => ({
+    deco,
+  }));
 
   return instance;
 }
-
-export const cleanInstance = (installId: string) => {
-  contexts.delete(installId);
-};
