@@ -112,6 +112,7 @@ export async function decoInstance(
       });
       form = await installStorage.getItem(installId);
     }
+    console.log({ installId, appName, form });
   }
 
   decofile = form ? fromJSON(form as Record<string, unknown>) : undefined;
