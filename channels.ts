@@ -2,7 +2,7 @@ import { Context, Hono } from "@hono/hono";
 import { MCPState } from "./registry.ts";
 import { findCompatibleApp, invoke } from "./utils.ts";
 
-const BINDING_INVOKE_ACTION = "/actions/channels/invoke.ts";
+const BINDING_INVOKE_ACTION = "/actions/deco-chat/channels/invoke.ts";
 
 const onChannelHooked = async (c: Context<MCPState>) => {
   const invokeApp = await findCompatibleApp(
