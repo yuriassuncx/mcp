@@ -10,13 +10,6 @@ const APPS_INSTALL_URL = new URLPattern({
   pathname: "/apps/:appName/:installId/*",
 });
 
-app.get("/_webhook", async () => {
-  await fetch(
-    "https://webhook.site/14b26684-eb78-4be9-82df-6a06525d124c",
-  );
-  return new Response(null, { status: 204 });
-});
-
 app.use("/*", async (ctx) => {
   const url = new URL(ctx.req.url);
   const match = APPS_INSTALL_URL.exec({ pathname: url.pathname });
