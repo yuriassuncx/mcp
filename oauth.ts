@@ -178,18 +178,37 @@ export const withOAuth = (
     if (!oauthApp) {
       return c.json({ error: `App ${appName} not found` }, 404);
     }
+    interface OAuthCallbackProps {
+      installId: string;
+      appName: string;
+      code: string | undefined;
+      state: string;
+      returnUrl?: string | null;
+      redirectUri?: string | null;
+      clientId: string;
+      clientSecret: string;
+      queryParams?: Record<string, string>;
+    }
 
     const oauthCallbackAction = `${invokeApp}${OAUTH_CALLBACK_ACTION}`;
-    const props = {
+    const props: OAuthCallbackProps = {
       installId,
       appName,
       code: c.req.query("code"),
       state,
       returnUrl,
       redirectUri,
-      clientId: envVars[oauthApp.clientIdKey],
-      clientSecret: envVars[oauthApp.clientSecretKey],
-    };
+      clientId: envVars[oauthApp.clientIdKey] as string,
+      clientSecret: envVars[oauthApp.clientSecretKey] as string,
+    }
+
+    const filteredQueryParams = Object.fromEntries(
+      Object.entries(c.req.query()).filter(([key]) => !Object.keys(props).includes(key)),
+    );
+    
+    // TODO(@jonasjesus42 - 2025-06-09 17:20): Sanitize query params — allow only known keys defined in props.
+    props.queryParams = filteredQueryParams;
+
     const response = await invoke(oauthCallbackAction, props, c);
 
     if (response && returnUrl) {
