@@ -205,6 +205,8 @@ export const withOAuth = (
     const filteredQueryParams = Object.fromEntries(
       Object.entries(c.req.query()).filter(([key]) => !Object.keys(props).includes(key)),
     );
+    
+    // TODO(@jonasjesus42 - 2025-06-09 17:20): Sanitize query params — allow only known keys defined in props.
     props.queryParams = filteredQueryParams;
 
     const response = await invoke(oauthCallbackAction, props, c);
