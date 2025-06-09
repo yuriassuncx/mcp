@@ -193,7 +193,7 @@ export const withOAuth = (
     const response = await invoke(oauthCallbackAction, props, c);
 
     if (response && returnUrl) {
-      const { installId } = await response.json();
+      const { installId, name } = await response.json();
       const thisUrl = new URL(c.req.url);
       thisUrl.protocol = "https:";
       if (thisUrl.hostname === "localhost") {
@@ -205,6 +205,7 @@ export const withOAuth = (
         new URL(`/apps/${appName}/${installId}/mcp/messages`, thisUrl.origin)
           .href,
       );
+      name && url.searchParams.set("name", name);
       return c.redirect(url.toString());
     }
 
