@@ -193,7 +193,7 @@ export const withOAuth = (
     const response = await invoke(oauthCallbackAction, props, c);
 
     if (response && returnUrl) {
-      const { installId, name } = await response.json();
+      const { installId, name, description } = await response.json();
       const thisUrl = new URL(c.req.url);
       thisUrl.protocol = "https:";
       if (thisUrl.hostname === "localhost") {
@@ -206,6 +206,7 @@ export const withOAuth = (
           .href,
       );
       name && url.searchParams.set("name", name);
+      description && url.searchParams.set("description", description);
       return c.redirect(url.toString());
     }
 
