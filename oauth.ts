@@ -221,6 +221,8 @@ export const withOAuth = (
         thisUrl.protocol = "http:";
       }
       const url = new URL(returnUrl);
+      url.searchParams.set("appName", appName);
+      url.searchParams.set("installId", installId);
       url.searchParams.set(
         "mcpUrl",
         new URL(`/apps/${appName}/${installId}/mcp/messages`, thisUrl.origin)
