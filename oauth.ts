@@ -162,6 +162,8 @@ export const withOAuth = (
   });
   app.get("/oauth/callback", async (c) => {
     const state = c.req.query("state");
+    const noRedirect = c.req.query("noRedirect");
+
     if (!state) {
       return c.json({ error: "State is required" }, 400);
     }
@@ -213,7 +215,7 @@ export const withOAuth = (
 
     const response = await invoke(oauthCallbackAction, props, c);
 
-    if (response && returnUrl) {
+    if (response && returnUrl && !noRedirect) {
       const { installId, name, account } = await response.json();
       const thisUrl = new URL(c.req.url);
       thisUrl.protocol = "https:";
