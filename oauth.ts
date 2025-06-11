@@ -214,8 +214,9 @@ export const withOAuth = (
     props.queryParams = filteredQueryParams;
 
     const response = await invoke(oauthCallbackAction, props, c);
+    const isHtml = response?.headers.get("content-type")?.includes("text/html");
 
-    if (response && returnUrl && !noRedirect) {
+    if (response && returnUrl && !noRedirect && !isHtml) {
       const { installId, name, account } = await response.json();
       const thisUrl = new URL(c.req.url);
       thisUrl.protocol = "https:";
