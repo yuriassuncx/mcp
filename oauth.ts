@@ -202,8 +202,8 @@ export const withOAuth = (
       clientId: envVars[oauthApp.clientIdKey] as string,
       clientSecret: envVars[oauthApp.clientSecretKey] as string,
       queryParams: {
-        savePermission: c.req.query("savePermission") ?? false,
-        continue: c.req.query("continue") ?? false,
+        savePermission: c.req.query("savePermission") === "true" ? true : false,
+        continue: c.req.query("continue") === "true" ? true : false,
         permissions: c.req.query("permissions") ?? undefined,
       },
     };
