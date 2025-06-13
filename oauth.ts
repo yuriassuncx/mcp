@@ -188,7 +188,7 @@ export const withOAuth = (
       redirectUri?: string | null;
       clientId: string;
       clientSecret: string;
-      queryParams?: Record<string, string>;
+      queryParams?: Record<string, string | boolean | undefined >;
     }
 
     const oauthCallbackAction = `${invokeApp}${OAUTH_CALLBACK_ACTION}`;
@@ -201,16 +201,12 @@ export const withOAuth = (
       redirectUri,
       clientId: envVars[oauthApp.clientIdKey] as string,
       clientSecret: envVars[oauthApp.clientSecretKey] as string,
+      queryParams: {
+        savePermission: c.req.query("savePermission") === "true" ? true : false,
+        continue: c.req.query("continue") === "true" ? true : false,
+        permissions: c.req.query("permissions") ?? undefined,
+      },
     };
-
-    const filteredQueryParams = Object.fromEntries(
-      Object.entries(c.req.query()).filter(([key]) =>
-        !Object.keys(props).includes(key)
-      ),
-    );
-
-    // TODO(@jonasjesus42 - 2025-06-09 17:20): Sanitize query params — allow only known keys defined in props.
-    props.queryParams = filteredQueryParams;
 
     const response = await invoke(oauthCallbackAction, props, c);
     const isHtml = response?.headers.get("content-type")?.includes("text/html");
