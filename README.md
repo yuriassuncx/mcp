@@ -1,6 +1,8 @@
 # MCP Gateway  
 
-Use your [deco apps](https://github.com/deco-cx/apps) as MCP servers.
+MCP App marketplace that powers http://deco.chat/
+
+App implementations are at https://github.com/deco-cx/apps
 
 ## Running
 
