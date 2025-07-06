@@ -40,16 +40,17 @@ import * as $$$$$$$$$$$32 from "./apps/deco/resend.ts";
 import * as $$$$$$$$$$$33 from "./apps/deco/serper.ts";
 import * as $$$$$$$$$$$34 from "./apps/deco/shopify-mcp.ts";
 import * as $$$$$$$$$$$35 from "./apps/deco/slack.ts";
-import * as $$$$$$$$$$$36 from "./apps/deco/stability.ts";
-import * as $$$$$$$$$$$37 from "./apps/deco/superfrete.ts";
-import * as $$$$$$$$$$$38 from "./apps/deco/tiny.ts";
-import * as $$$$$$$$$$$39 from "./apps/deco/tiptap-cloud.ts";
-import * as $$$$$$$$$$$40 from "./apps/deco/turso-db.ts";
-import * as $$$$$$$$$$$41 from "./apps/deco/vertex.ts";
-import * as $$$$$$$$$$$42 from "./apps/deco/vidu.ts";
-import * as $$$$$$$$$$$43 from "./apps/deco/vnda.ts";
-import * as $$$$$$$$$$$44 from "./apps/deco/vtex.ts";
-import * as $$$$$$$$$$$45 from "./apps/site.ts";
+import * as $$$$$$$$$$$36 from "./apps/deco/spotify.ts";
+import * as $$$$$$$$$$$37 from "./apps/deco/stability.ts";
+import * as $$$$$$$$$$$38 from "./apps/deco/superfrete.ts";
+import * as $$$$$$$$$$$39 from "./apps/deco/tiny.ts";
+import * as $$$$$$$$$$$40 from "./apps/deco/tiptap-cloud.ts";
+import * as $$$$$$$$$$$41 from "./apps/deco/turso-db.ts";
+import * as $$$$$$$$$$$42 from "./apps/deco/vertex.ts";
+import * as $$$$$$$$$$$43 from "./apps/deco/vidu.ts";
+import * as $$$$$$$$$$$44 from "./apps/deco/vnda.ts";
+import * as $$$$$$$$$$$45 from "./apps/deco/vtex.ts";
+import * as $$$$$$$$$$$46 from "./apps/site.ts";
 import * as $$$0 from "./loaders/mcps/get.ts";
 import * as $$$1 from "./loaders/mcps/search.ts";
 import * as $$$$$$0 from "./sections/Component.tsx";
@@ -109,16 +110,17 @@ const manifest = {
     "site/apps/deco/serper.ts": $$$$$$$$$$$33,
     "site/apps/deco/shopify-mcp.ts": $$$$$$$$$$$34,
     "site/apps/deco/slack.ts": $$$$$$$$$$$35,
-    "site/apps/deco/stability.ts": $$$$$$$$$$$36,
-    "site/apps/deco/superfrete.ts": $$$$$$$$$$$37,
-    "site/apps/deco/tiny.ts": $$$$$$$$$$$38,
-    "site/apps/deco/tiptap-cloud.ts": $$$$$$$$$$$39,
-    "site/apps/deco/turso-db.ts": $$$$$$$$$$$40,
-    "site/apps/deco/vertex.ts": $$$$$$$$$$$41,
-    "site/apps/deco/vidu.ts": $$$$$$$$$$$42,
-    "site/apps/deco/vnda.ts": $$$$$$$$$$$43,
-    "site/apps/deco/vtex.ts": $$$$$$$$$$$44,
-    "site/apps/site.ts": $$$$$$$$$$$45,
+    "site/apps/deco/spotify.ts": $$$$$$$$$$$36,
+    "site/apps/deco/stability.ts": $$$$$$$$$$$37,
+    "site/apps/deco/superfrete.ts": $$$$$$$$$$$38,
+    "site/apps/deco/tiny.ts": $$$$$$$$$$$39,
+    "site/apps/deco/tiptap-cloud.ts": $$$$$$$$$$$40,
+    "site/apps/deco/turso-db.ts": $$$$$$$$$$$41,
+    "site/apps/deco/vertex.ts": $$$$$$$$$$$42,
+    "site/apps/deco/vidu.ts": $$$$$$$$$$$43,
+    "site/apps/deco/vnda.ts": $$$$$$$$$$$44,
+    "site/apps/deco/vtex.ts": $$$$$$$$$$$45,
+    "site/apps/site.ts": $$$$$$$$$$$46,
   },
   "name": "site",
   "baseUrl": import.meta.url,

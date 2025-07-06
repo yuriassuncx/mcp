@@ -71,6 +71,10 @@ const WELL_KNOWN_OAUTH_APPS: WellKnownOAuthApps = {
     clientIdKey: "OAUTH_CLIENT_ID_SLACK",
     clientSecretKey: "OAUTH_CLIENT_SECRET_SLACK",
   },
+  "spotify": {
+    clientIdKey: "SPOTIFY_CLIENT_ID",
+    clientSecretKey: "SPOTIFY_CLIENT_SECRET",
+  },
 };
 
 const extractProviderFromAppName = (appName: string): string | null => {
