@@ -192,7 +192,7 @@ export const withOAuth = (
       redirectUri?: string | null;
       clientId: string;
       clientSecret: string;
-      queryParams?: Record<string, string | boolean | undefined >;
+      queryParams?: Record<string, string | boolean | undefined>;
     }
 
     const oauthCallbackAction = `${invokeApp}${OAUTH_CALLBACK_ACTION}`;
