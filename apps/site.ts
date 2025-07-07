@@ -11,7 +11,7 @@ export interface State {
   installStorage: Storage;
 }
 const connectionUrl = Deno.env.get("DENO_KV_CONNECTION_URL");
-const kv = await Deno.openKv(connectionUrl);
+const kv = await Deno.openKv?.(connectionUrl);
 
 export const installStorage: Storage = {
   async getItem<T>(key: string) {
