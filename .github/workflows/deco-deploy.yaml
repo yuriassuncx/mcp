@@ -20,3 +20,5 @@ jobs:
 
       - name: Deco Deploy
         uses: deco-cx/deploy@v0.1.7-beta.1
+        with:
+          build_cmd: "deno run -A dev.ts build --unstable-kv"
