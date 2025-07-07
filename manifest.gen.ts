@@ -26,7 +26,6 @@ import * as $$$$$$$$$$$18 from "./apps/deco/google-gmail.ts";
 import * as $$$$$$$$$$$19 from "./apps/deco/google-sheets.ts";
 import * as $$$$$$$$$$$20 from "./apps/deco/google-youtube.ts";
 import * as $$$$$$$$$$$21 from "./apps/deco/grain.ts";
-import * as $$$$$$$$$$$22 from "./apps/deco/htmx.ts";
 import * as $$$$$$$$$$$23 from "./apps/deco/jira.ts";
 import * as $$$$$$$$$$$24 from "./apps/deco/js-bundler.ts";
 import * as $$$$$$$$$$$25 from "./apps/deco/openai.ts";
@@ -97,7 +96,6 @@ const manifest = {
     "site/apps/deco/google-sheets.ts": $$$$$$$$$$$19,
     "site/apps/deco/google-youtube.ts": $$$$$$$$$$$20,
     "site/apps/deco/grain.ts": $$$$$$$$$$$21,
-    "site/apps/deco/htmx.ts": $$$$$$$$$$$22,
     "site/apps/deco/jira.ts": $$$$$$$$$$$23,
     "site/apps/deco/js-bundler.ts": $$$$$$$$$$$24,
     "site/apps/deco/openai.ts": $$$$$$$$$$$25,
