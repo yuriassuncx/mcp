@@ -22,10 +22,12 @@ const getInstallIdFromAuthorizationHeader = (req: Request) => {
 app.use("/*", async (ctx) => {
   const url = new URL(ctx.req.url);
   const match = APPS_INSTALL_URL.exec({ pathname: url.pathname });
+  const isMcpMessages = url.pathname.endsWith("/mcp/messages");
 
   const fromHeader = getInstallIdFromAuthorizationHeader(ctx.req.raw);
-  let installId = fromHeader ?? url.searchParams.get("installId") ??
+  const fromParamsInstallId = fromHeader ?? url.searchParams.get("installId") ??
     match?.pathname?.groups?.installId;
+  let installId = fromParamsInstallId;
 
   let appName = url.searchParams.get("appName") ??
     match?.pathname?.groups?.appName;
@@ -49,7 +51,8 @@ app.use("/*", async (ctx) => {
     const instance = await decoInstance({
       installId,
       appName: decodedAppName,
-      isInstallIdFromHeader: !!fromHeader,
+      isInstallIdFromHeader: !!fromHeader ||
+        (isMcpMessages && !fromParamsInstallId),
     });
     if (!instance) {
       return ctx.res = await ctx.notFound();
