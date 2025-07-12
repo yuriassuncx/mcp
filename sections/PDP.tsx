@@ -626,7 +626,8 @@ export default function PDP({ mcp, error, installation, formData }: Props) {
           <h2 class="text-xl font-bold mb-2">Installation Successful!</h2>
           <p class="mb-4">Your MCP URL:</p>
           <code class="block bg-green-50 p-4 rounded">
-            {installation.data.connection.url}
+            <p>URL: {installation.data.connection.url}</p>
+            <p>Token: {installation.data.connection.token}</p>
           </code>
         </div>
       </div>

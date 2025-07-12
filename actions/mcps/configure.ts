@@ -80,7 +80,7 @@ const configureDeco = async (
     };
   }
 
-  const url = new URL(`/apps/${id}/${installId}/mcp/messages`, MY_DOMAIN);
+  const url = new URL(`/apps/${id}/mcp/messages`, MY_DOMAIN);
 
   await installStorage.setItem(installId, {
     [id]: { ...config, __resolveType: resolveType },
@@ -89,7 +89,7 @@ const configureDeco = async (
   return {
     success: true,
     installId,
-    connection: { url: url.href, type: "HTTP" },
+    connection: { url: url.href, type: "HTTP", token: installId },
   };
 };
 
