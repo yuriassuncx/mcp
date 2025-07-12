@@ -22,7 +22,6 @@ const getInstallIdFromAuthorizationHeader = (req: Request) => {
 app.use("/*", async (ctx) => {
   const url = new URL(ctx.req.url);
   const match = APPS_INSTALL_URL.exec({ pathname: url.pathname });
-  const isMcpMessages = url.pathname.endsWith("/mcp/messages");
 
   const fromHeader = getInstallIdFromAuthorizationHeader(ctx.req.raw);
   const fromMatchGroup = match?.pathname?.groups?.installId;
@@ -31,6 +30,8 @@ app.use("/*", async (ctx) => {
 
   let appName = url.searchParams.get("appName") ??
     match?.pathname?.groups?.appName;
+
+  const isMcpMessages = url.pathname.endsWith(`${appName}/mcp/messages`);
 
   // setInstallId to random if appName is specified
   if (appName && !installId) {
@@ -52,7 +53,7 @@ app.use("/*", async (ctx) => {
       installId,
       appName: decodedAppName,
       isInstallIdFromHeader: !!fromHeader ||
-        (isMcpMessages && !fromMatchGroup),
+        isMcpMessages,
     });
     if (!instance) {
       return ctx.res = await ctx.notFound();
