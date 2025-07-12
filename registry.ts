@@ -111,7 +111,9 @@ export async function decoInstance(
   decofile = form ? fromJSON(form as Record<string, unknown>) : undefined;
 
   const basePath = appName && installId
-    ? `/apps/${encodeURIComponent(appName)}${isInstallIdFromHeader ? "" : `/${installId}`}`
+    ? `/apps/${encodeURIComponent(appName)}${
+      isInstallIdFromHeader ? "" : `/${installId}`
+    }`
     : undefined;
 
   installId ??= "default";

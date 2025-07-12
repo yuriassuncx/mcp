@@ -24,8 +24,9 @@ app.use("/*", async (ctx) => {
   const match = APPS_INSTALL_URL.exec({ pathname: url.pathname });
 
   const fromHeader = getInstallIdFromAuthorizationHeader(ctx.req.raw);
-  let installId = url.searchParams.get("installId") ??
-    match?.pathname?.groups?.installId ?? fromHeader;
+  let installId = fromHeader ?? url.searchParams.get("installId") ??
+    match?.pathname?.groups?.installId;
+
   let appName = url.searchParams.get("appName") ??
     match?.pathname?.groups?.appName;
 
