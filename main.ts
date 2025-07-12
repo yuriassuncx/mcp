@@ -25,9 +25,9 @@ app.use("/*", async (ctx) => {
   const isMcpMessages = url.pathname.endsWith("/mcp/messages");
 
   const fromHeader = getInstallIdFromAuthorizationHeader(ctx.req.raw);
-  const fromParamsInstallId = fromHeader ?? url.searchParams.get("installId") ??
-    match?.pathname?.groups?.installId;
-  let installId = fromParamsInstallId;
+  const fromMatchGroup = match?.pathname?.groups?.installId;
+  let installId = fromHeader ?? url.searchParams.get("installId") ??
+    fromMatchGroup;
 
   let appName = url.searchParams.get("appName") ??
     match?.pathname?.groups?.appName;
@@ -52,7 +52,7 @@ app.use("/*", async (ctx) => {
       installId,
       appName: decodedAppName,
       isInstallIdFromHeader: !!fromHeader ||
-        (isMcpMessages && !fromParamsInstallId),
+        (isMcpMessages && !fromMatchGroup),
     });
     if (!instance) {
       return ctx.res = await ctx.notFound();
