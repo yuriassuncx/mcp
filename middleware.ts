@@ -54,7 +54,7 @@ export const middlewaresFor = (
         if (req.params.name === OAUTH_START_TOOL) {
           const inst = await instance;
           const response = await startOAuth({
-            appName: req.params.arguments?.appName as string,
+            appName,
             installId: req.params.arguments?.installId as string,
             returnUrl: req.params.arguments?.returnUrl as string | null,
             instance: inst,
