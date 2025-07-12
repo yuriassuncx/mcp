@@ -67,6 +67,7 @@ export interface MCPInstance {
 }
 
 export interface MCPInstanceOptions {
+  isInstallIdFromHeader?: boolean;
   installId?: string;
   appName?: string;
   bindings?: DecoOptions<Manifest>["bindings"];
@@ -90,7 +91,7 @@ export const { deco: MCP_REGISTRY } = (await decoInstance({
 }))!;
 
 export async function decoInstance(
-  { installId, appName, bindings }: MCPInstanceOptions,
+  { installId, appName, bindings, isInstallIdFromHeader }: MCPInstanceOptions,
 ): Promise<MCPInstance | undefined> {
   let decofile: DecoOptions["decofile"] | undefined = undefined;
 
@@ -110,7 +111,7 @@ export async function decoInstance(
   decofile = form ? fromJSON(form as Record<string, unknown>) : undefined;
 
   const basePath = appName && installId
-    ? `/apps/${encodeURIComponent(appName)}/${installId}`
+    ? `/apps/${encodeURIComponent(appName)}${isInstallIdFromHeader ? "" : `/${installId}`}`
     : undefined;
 
   installId ??= "default";

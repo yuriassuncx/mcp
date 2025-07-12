@@ -10,12 +10,22 @@ const APPS_INSTALL_URL = new URLPattern({
   pathname: "/apps/:appName/:installId/*",
 });
 
+const getInstallIdFromAuthorizationHeader = (req: Request) => {
+  const authorization = req.headers.get("Authorization");
+  if (!authorization) {
+    return undefined;
+  }
+  const [_, installId] = authorization.split(" ");
+  return installId || undefined;
+};
+
 app.use("/*", async (ctx) => {
   const url = new URL(ctx.req.url);
   const match = APPS_INSTALL_URL.exec({ pathname: url.pathname });
 
+  const fromHeader = getInstallIdFromAuthorizationHeader(ctx.req.raw);
   let installId = url.searchParams.get("installId") ??
-    match?.pathname?.groups?.installId;
+    match?.pathname?.groups?.installId ?? fromHeader;
   let appName = url.searchParams.get("appName") ??
     match?.pathname?.groups?.appName;
 
@@ -35,7 +45,11 @@ app.use("/*", async (ctx) => {
   if (appName) {
     const decodedAppName = decodeURIComponent(appName);
 
-    const instance = await decoInstance({ installId, appName: decodedAppName });
+    const instance = await decoInstance({
+      installId,
+      appName: decodedAppName,
+      isInstallIdFromHeader: !!fromHeader,
+    });
     if (!instance) {
       return ctx.res = await ctx.notFound();
     }
