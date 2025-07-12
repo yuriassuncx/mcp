@@ -31,7 +31,7 @@ app.use("/*", async (ctx) => {
   let appName = url.searchParams.get("appName") ??
     match?.pathname?.groups?.appName;
 
-  const isMcpMessages = url.pathname.endsWith(`${appName}/mcp/messages`);
+  const isMcpMessages = url.pathname.endsWith(`/${appName}/mcp/messages`);
 
   // setInstallId to random if appName is specified
   if (appName && !installId) {
