@@ -25,13 +25,12 @@ app.use("/*", async (ctx) => {
 
   const fromHeader = getInstallIdFromAuthorizationHeader(ctx.req.raw);
   const fromMatchGroup = match?.pathname?.groups?.installId;
-  let installId = fromHeader ?? url.searchParams.get("installId") ??
-    fromMatchGroup;
-
   let appName = url.searchParams.get("appName") ??
     match?.pathname?.groups?.appName;
 
   const isMcpMessages = url.pathname.endsWith(`/${appName}/mcp/messages`);
+  let installId = fromHeader ?? url.searchParams.get("installId") ??
+    (isMcpMessages ? undefined : fromMatchGroup);
 
   // setInstallId to random if appName is specified
   if (appName && !installId) {
