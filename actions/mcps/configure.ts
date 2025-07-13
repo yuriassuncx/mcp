@@ -112,7 +112,7 @@ const configureComposio = async ({ id }: ComposioMCP) => {
   return {
     success: true,
     installId,
-    connection: { url: url.href, type: "SSE" },
+    connection: { url: url.href, type: "HTTP" },
   };
 };
 
