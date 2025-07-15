@@ -25,7 +25,7 @@ const OAUTH_TOOL: Tool = {
       installId: { type: "string" },
       returnUrl: { type: "string" },
     },
-    required: ["appName", "installId"],
+    required: [],
     additionalProperties: false,
   },
   resolveType: OAUTH_START_TOOL,
@@ -37,15 +37,16 @@ const OAUTH_TOOL: Tool = {
     required: ["redirectUri"],
     additionalProperties: false,
   },
-}
+};
 export const middlewaresFor = (
   { appName, installId, instance }: MiddlewareOptions,
 ): {
   listTools: ListToolsMiddleware[];
   callTool: CallToolMiddleware[];
 } => {
-  const checkConfigurationTool = `${slugify(appName)
-    }_${CHECK_CONFIGURATION_TOOL}`;
+  const checkConfigurationTool = `${
+    slugify(appName)
+  }_${CHECK_CONFIGURATION_TOOL}`;
   const configureMcpTool = `${slugify(appName)}_${CONFIGURE_MCP_TOOL}`;
 
   return {
@@ -55,7 +56,8 @@ export const middlewaresFor = (
           const inst = await instance;
           const response = await startOAuth({
             appName,
-            installId: req.params.arguments?.installId as string,
+            installId: req.params.arguments?.installId as string ??
+              crypto.randomUUID(),
             returnUrl: req.params.arguments?.returnUrl as string | null,
             instance: inst,
             envVars: Deno.env.toObject(),
@@ -75,7 +77,7 @@ export const middlewaresFor = (
             }) as MCPState["Variables"]["invoke"],
           });
           const url = response && typeof response === "object" &&
-            response instanceof Response
+              response instanceof Response
             ? response.headers.get("Location")
             : null;
           const result = {
@@ -123,7 +125,7 @@ export const middlewaresFor = (
         app.name === decodeURIComponent(appName)
       )?.inputSchema;
 
-      const hasOAuth = tools.some(tool => tool.name === OAUTH_START_TOOL);
+      const hasOAuth = tools.some((tool) => tool.name === OAUTH_START_TOOL);
 
       return {
         tools: [...tools, ...(!hasOAuth ? [OAUTH_TOOL] : []), {
