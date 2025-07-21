@@ -16,3 +16,5 @@ WIP: This should be way easier.
 2) Release and bump version
 3) On this repo, update `deno.json` apps version.
 4) Create a new file on the `apps/` folder. Follow examples.
+
+
