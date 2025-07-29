@@ -75,6 +75,10 @@ const WELL_KNOWN_OAUTH_APPS: WellKnownOAuthApps = {
     clientIdKey: "SPOTIFY_CLIENT_ID",
     clientSecretKey: "SPOTIFY_CLIENT_SECRET",
   },
+  "discord": {
+    clientIdKey: "DISCORD_CLIENT_ID",
+    clientSecretKey: "DISCORD_CLIENT_SECRET",
+  },
 };
 
 const extractProviderFromAppName = (appName: string): string | null => {

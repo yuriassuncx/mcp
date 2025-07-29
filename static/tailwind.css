@@ -645,14 +645,6 @@ html {
 .carousel-end .carousel-item {
   scroll-snap-align: end;
 }
-.chat {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  -moz-column-gap: 0.75rem;
-       column-gap: 0.75rem;
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-}
 .divider {
   display: flex;
   flex-direction: row;
@@ -1522,6 +1514,22 @@ input.tab:checked + .tab-content,
   line-height: .75rem;
   --tab-padding: 0.5rem;
 }
+.avatar.online:before {
+  content: "";
+  position: absolute;
+  z-index: 10;
+  display: block;
+  border-radius: 9999px;
+  --tw-bg-opacity: 1;
+  background-color: var(--fallback-su,oklch(var(--su)/var(--tw-bg-opacity)));
+  outline-style: solid;
+  outline-width: 2px;
+  outline-color: var(--fallback-b1,oklch(var(--b1)/1));
+  width: 15%;
+  height: 15%;
+  top: 7%;
+  right: 7%;
+}
 .join.join-vertical > :where(*:not(:first-child)) {
   margin-left: 0px;
   margin-right: 0px;
@@ -1531,9 +1539,6 @@ input.tab:checked + .tab-content,
   margin-top: 0px;
   margin-bottom: 0px;
   margin-inline-start: -1px;
-}
-.visible {
-  visibility: visible;
 }
 .static {
   position: static;
