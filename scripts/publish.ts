@@ -69,7 +69,7 @@ async function publishApp(
       type: "HTTP",
       url: `https://mcp.deco.site/apps/${app.name}/mcp/messages`,
     },
-    unlisted: true,
+    unlisted: false,
   };
 
   const url =
