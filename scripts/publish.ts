@@ -24,7 +24,7 @@ async function fetchApps(): Promise<App[]> {
   console.log("Fetching apps from MCP API...");
 
   const response = await fetch(
-    "https://mcp.deco.site/live/invoke/site/loaders/mcps/search.ts",
+    "https://mcp.deco.site/live/invoke/site/loaders/mcps/search.ts?provider=deco",
   );
 
   if (!response.ok) {

@@ -40,11 +40,11 @@ const matcher = (query: string) => {
  * @description Search for integrations by name or description. If no query is provided, all integrations will be returned.
  */
 export default async function loader(
-  { query = "" }: { query?: string } = {},
+  { query = "", provider }: { query?: string; provider?: string } = {},
 ): Promise<MCP[]> {
   const [composio, deco] = await Promise.all([
-    listFromComposio(),
-    listFromDeco(),
+    !provider || provider === "composio" ? listFromComposio() : [],
+    !provider || provider === "deco" ? listFromDeco() : [],
   ]);
 
   const list = [];
