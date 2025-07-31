@@ -1,6 +1,6 @@
 interface App {
   name: string;
-  appName: string;
+  appName?: string;
   description: string;
   icon: string;
   provider: string;
@@ -42,6 +42,11 @@ async function fetchApps(): Promise<App[]> {
 async function publishApp(
   app: App,
 ): Promise<{ success: boolean; error?: string }> {
+  if (!app.appName) {
+    console.log(`Skipping app: ${app.name} (no appName)`);
+    return { success: true };
+  }
+
   const workspace = Deno.env.get("WORKSPACE");
   const token = Deno.env.get("DECO_TOKEN");
 
@@ -181,5 +186,5 @@ async function main() {
 
 // Run the script if this file is executed directly
 if (import.meta.main) {
-  main();
+  await main();
 }
