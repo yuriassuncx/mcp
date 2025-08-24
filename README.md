@@ -1,4 +1,4 @@
-# MCP Gateway  
+# MCP Gateway   
 
 MCP App marketplace that powers http://deco.chat/
 
