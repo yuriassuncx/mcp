@@ -182,7 +182,7 @@ export const withOAuth = (
       installId,
       instance: c.var.instance,
       envVars,
-      invoke: c.var.invoke.bind(c.var.invoke),
+      invoke: c.var.invoke,
     });
 
     if (!result) {
