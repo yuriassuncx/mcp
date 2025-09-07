@@ -182,12 +182,14 @@ export const withOAuth = (
     const envVars = env(c);
     const url = new URL(c.req.url);
     const returnUrl = url.searchParams.get("returnUrl");
+    const integrationId = url.searchParams.get("integrationId");
 
     const result = await startOAuth({
       returnUrl,
       appName,
       installId,
       instance: c.var.instance,
+      integrationId,
       envVars,
       invoke: c.var.invoke,
     });
