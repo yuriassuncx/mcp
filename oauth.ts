@@ -16,6 +16,7 @@ interface State {
   invokeApp: string;
   returnUrl?: string | null;
   redirectUri?: string | null;
+  integrationId?: string | null;
 }
 
 export const StateBuilder = {
@@ -25,6 +26,7 @@ export const StateBuilder = {
     invokeApp: string,
     returnUrl?: string | null,
     redirectUri?: string | null,
+    integrationId?: string | null,
   ) => {
     return encodeURIComponent(btoa(JSON.stringify({
       appName,
@@ -32,6 +34,7 @@ export const StateBuilder = {
       invokeApp,
       returnUrl,
       redirectUri,
+      integrationId,
     })));
   },
   parse: (state: string): State & StateProvider => {
@@ -109,6 +112,7 @@ const getOAuthConfigForApp = (appName: string) => {
 interface OAuthStartParams {
   appName: string;
   returnUrl?: string | null;
+  integrationId?: string | null;
   installId: string;
   instance: MCPInstance;
   envVars: Record<string, unknown>;
@@ -117,7 +121,8 @@ interface OAuthStartParams {
 
 // deno-lint-ignore no-explicit-any
 export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
-  const { appName, installId, instance, returnUrl, envVars } = params;
+  const { appName, installId, instance, returnUrl, envVars, integrationId } =
+    params;
 
   const redirectUri = new URL(
     `/oauth/callback`,
@@ -148,6 +153,7 @@ export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
     invokeApp,
     returnUrl,
     redirectUri.href,
+    integrationId,
   );
   const oauthStartLoader = `${invokeApp}${OAUTH_START_LOADER}`;
   const props = {
@@ -158,6 +164,7 @@ export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
     returnUrl,
     clientId,
     scopes,
+    integrationId,
   };
 
   // deno-lint-ignore no-explicit-any
@@ -199,10 +206,16 @@ export const withOAuth = (
       return c.json({ error: "State is required" }, 400);
     }
 
-    const { appName, installId, invokeApp, returnUrl, redirectUri } =
-      StateBuilder.parse(
-        state,
-      );
+    const {
+      appName,
+      installId,
+      invokeApp,
+      returnUrl,
+      redirectUri,
+      integrationId,
+    } = StateBuilder.parse(
+      state,
+    );
 
     const envVars = env(c);
 
@@ -218,6 +231,7 @@ export const withOAuth = (
       state: string;
       returnUrl?: string | null;
       redirectUri?: string | null;
+      integrationId?: string | null;
       clientId: string;
       clientSecret: string;
       queryParams?: Record<string, string | boolean | undefined>;
@@ -231,6 +245,7 @@ export const withOAuth = (
       state,
       returnUrl,
       redirectUri,
+      integrationId,
       clientId: envVars[oauthApp.clientIdKey] as string,
       clientSecret: envVars[oauthApp.clientSecretKey] as string,
       queryParams: {
@@ -253,6 +268,7 @@ export const withOAuth = (
       const url = new URL(returnUrl);
       url.searchParams.set("appName", appName);
       url.searchParams.set("installId", installId);
+      integrationId && url.searchParams.set("integrationId", integrationId);
       url.searchParams.set(
         "mcpUrl",
         new URL(`/apps/${appName}/${installId}/mcp/messages`, thisUrl.origin)

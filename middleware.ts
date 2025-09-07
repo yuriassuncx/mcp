@@ -24,6 +24,7 @@ const OAUTH_TOOL: Tool = {
       appName: { type: "string" },
       installId: { type: "string" },
       returnUrl: { type: "string" },
+      integrationId: { type: "string" },
     },
     required: [],
     additionalProperties: false,
