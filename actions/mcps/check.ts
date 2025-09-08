@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import Ajv from "ajv";
-import { installStorage } from "../../apps/site.ts";
 import getMCP from "../../loaders/mcps/get.ts";
+import { getInstallState } from "../../utils.ts";
 
 const ajv = new Ajv.Ajv({ strict: false });
 
@@ -36,9 +36,9 @@ export const getConfig = async (
   integrationId: string,
 ) => {
   const config = typeof installIdOrConfig === "string"
-    ? await installStorage.getItem<Record<string, any>>(installIdOrConfig)
+    ? await getInstallState(installIdOrConfig, integrationId)
     : installIdOrConfig;
-  const { __resolveType: _, ...configData } = config?.[integrationId];
+  const { __resolveType: _, ...configData } = (config as any)?.[integrationId];
   return configData;
 };
 /**
@@ -57,7 +57,7 @@ export default async function checkConfiguration(
     };
   }
 
-  const config = await installStorage.getItem<Record<string, any>>(installId);
+  const config = await getInstallState(installId, "fake-just-for-working");
 
   if (!config) {
     return { success: false, errors: ["Install not found"] };
