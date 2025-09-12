@@ -6,6 +6,7 @@ import { MCP_REGISTRY, MCPInstance, MCPState } from "./registry.ts";
 import type { MCP } from "./loaders/mcps/search.ts";
 import { decodeJwt } from "jose";
 import { installStorage } from "./apps/site.ts";
+import getMCP from "./loaders/mcps/get.ts";
 
 export const listFromDeco = async () => {
   const names = new Map<string, string>();
@@ -34,8 +35,12 @@ const tryDecodeJwt = (installId: string) => {
 };
 export const getInstallState = async (installId: string, appName?: string) => {
   const jwt = tryDecodeJwt(installId);
-  if (jwt && "state" in jwt && appName) {
-    return { [appName]: jwt.state };
+  if (jwt && "state" in jwt && appName && typeof jwt.state === "object") {
+    const integration: MCP | undefined = await getMCP({ id: appName });
+
+    return {
+      [appName]: { ...jwt.state, __resolveType: integration?.resolveType },
+    };
   }
   return await installStorage.getItem(installId);
 };

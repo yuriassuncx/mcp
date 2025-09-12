@@ -78,7 +78,7 @@ export const middlewaresFor = (
               );
             }) as MCPState["Variables"]["invoke"],
           });
-          let result = {
+          let result: { redirectUrl: string | null } = {
             redirectUrl: null,
           };
           if (
