@@ -1,7 +1,14 @@
 {
   "name": "Test",
   "path": "/test",
-  "sections": [],
+  "sections": [
+    {
+      "__resolveType": "website/sections/Rendering/Lazy.tsx",
+      "section": {
+        "__resolveType": "site/sections/Home.tsx"
+      }
+    }
+  ],
   "seo": {
     "__resolveType": "website/sections/Seo/SeoV2.tsx"
   },
