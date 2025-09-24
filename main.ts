@@ -1,10 +1,32 @@
 import { Context } from "@deco/deco";
 import { Hono } from "@hono/hono";
+import { cors } from "@hono/hono/cors";
 import { StateBuilder } from "./oauth.ts";
 import { decoInstance, MCP_REGISTRY } from "./registry.ts";
 
 const app = new Hono();
 const envPort = Deno.env.get("PORT");
+
+// Add CORS middleware to allow requests from admin.decocms.com
+app.use(
+  "/*",
+  cors({
+    origin: "https://admin.decocms.com",
+    allowHeaders: [
+      "accept",
+      "authorization",
+      "content-type",
+      "mcp-protocol-version",
+      "sec-ch-ua",
+      "sec-ch-ua-mobile",
+      "sec-ch-ua-platform",
+      "x-trace-debug-id",
+    ],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    maxAge: 86400, // 24 hours
+  }),
+);
 
 const APPS_INSTALL_URL = new URLPattern({
   pathname: "/apps/:appName/:installId/*",
