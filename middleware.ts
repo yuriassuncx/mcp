@@ -142,7 +142,7 @@ export const middlewaresFor = (
         tools: [...tools, ...(!hasOAuth ? [OAUTH_TOOL] : []), {
           name: checkConfigurationTool,
           description:
-            "Check if the configuration is valid, no input is needed, you should ensure first (once) if the configuration is valid before calling any tool, once checked, you can freely call tools. It also returns the JSON Schema of the configuration.",
+            "Check if the configuration is valid, no input is needed.",
           inputSchema: {
             type: "object",
           },
