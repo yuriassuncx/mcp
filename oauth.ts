@@ -8,13 +8,6 @@ import {
   schemaFromAppName,
 } from "./utils.ts";
 
-import {
-  needsSpecialOAuthHandling,
-  createSpecialOAuthRedirect,
-  validateAppOAuthParams,
-  getAppOAuthStartParams,
-} from "./oauth-handlers.ts";
-
 const OAUTH_START_LOADER = "/loaders/oauth/start.ts";
 const OAUTH_CALLBACK_ACTION = "/actions/oauth/callback.ts";
 
@@ -29,10 +22,6 @@ interface State {
   returnUrl?: string | null;
   redirectUri?: string | null;
   integrationId?: string | null;
-  isCustomBot?: boolean;
-  customClientId?: string;
-  customClientSecret?: string;
-  customBotName?: string;
 }
 
 export const StateBuilder = {
@@ -43,10 +32,6 @@ export const StateBuilder = {
     returnUrl?: string | null,
     redirectUri?: string | null,
     integrationId?: string | null,
-    isCustomBot?: boolean,
-    customClientId?: string,
-    customClientSecret?: string,
-    customBotName?: string,
   ) => {
     return encodeURIComponent(btoa(JSON.stringify({
       appName,
@@ -55,10 +40,6 @@ export const StateBuilder = {
       returnUrl,
       redirectUri,
       integrationId,
-      isCustomBot,
-      customClientId,
-      customClientSecret,
-      customBotName,
     })));
   },
   parse: (state: string): State & StateProvider => {
@@ -133,6 +114,32 @@ const getOAuthConfigForApp = (appName: string) => {
   return provider ? WELL_KNOWN_OAUTH_APPS[provider] : null;
 };
 
+const APPS_WITH_CUSTOM_OAUTH = ["slack"];
+
+function appNeedsCustomOAuthSelection(appName: string): boolean {
+  const normalized = appName?.toLowerCase();
+  return APPS_WITH_CUSTOM_OAUTH.some(app => 
+    normalized === app || normalized?.startsWith(`${app}-`) || normalized?.startsWith(`${app}_`)
+  );
+}
+
+async function createCustomOAuthSelectionHTML(
+  appName: string, 
+  params: { returnUrl?: string | null; integrationId?: string | null; installId: string }
+): Promise<Response> {
+  const normalizedApp = appName?.toLowerCase();
+  
+  // Load specific template for slack app
+  if (normalizedApp === "slack" || normalizedApp?.startsWith("slack")) {
+    const { createSlackSelectionHTML } = await import("./components/oauth-templates/slack-oauth.ts");
+    return createSlackSelectionHTML(params);
+  }
+
+  // If we reached here, the app does not have a custom template implemented
+  throw new Error(`Custom OAuth template not implemented for app: ${appName}`);
+}
+
+
 interface OAuthStartParams {
   appName: string;
   returnUrl?: string | null;
@@ -141,25 +148,17 @@ interface OAuthStartParams {
   instance: MCPInstance;
   envVars: Record<string, unknown>;
   invoke: MCPState["Variables"]["invoke"];
-  isCustomBot?: boolean;
-  customClientId?: string;
-  customClientSecret?: string;
-  customBotName?: string;
 }
 
 // deno-lint-ignore no-explicit-any
-export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
+export const startOAuth = async (params: OAuthStartParams, url?: URL): Promise<any> => {
   const { 
     appName, 
     installId, 
     instance, 
     returnUrl, 
     envVars, 
-    integrationId,
-    isCustomBot,
-    customClientId,
-    customClientSecret,
-    customBotName
+    integrationId
   } = params;
 
   const redirectUri = new URL(
@@ -188,14 +187,14 @@ export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
     return null;
   }
 
-  // Use custom bot credentials if provided, otherwise use environment credentials
-  let clientId: string;
-  if (isCustomBot && customClientId) {
-    clientId = customClientId;
-  } else {
-    clientId = envVars[oauthApp.clientIdKey] as string;
+  // Check URL params for custom credentials (works for any OAuth app), otherwise use envVars
+  let clientId = envVars[oauthApp.clientIdKey];
+  if (url) {
+    const customClientId = url.searchParams.get("clientId");
+    if (customClientId) {
+      clientId = customClientId;
+    }
   }
-
   const scopes = oauthApp.scopes;
 
   const state = StateBuilder.build(
@@ -205,10 +204,6 @@ export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
     returnUrl,
     redirectUri.href,
     integrationId,
-    isCustomBot,
-    customClientId,
-    customClientSecret,
-    customBotName,
   );
   const oauthStartLoader = `${invokeApp}${OAUTH_START_LOADER}`;
   const props = {
@@ -236,28 +231,19 @@ export const withOAuth = (
     const installId = c.var.installId;
     const envVars = env(c);
     const url = new URL(c.req.url);
-    
-    // Extract standard OAuth parameters
     const returnUrl = url.searchParams.get("returnUrl");
     const integrationId = url.searchParams.get("integrationId");
 
-    // Check if this app needs special OAuth handling (e.g., selection page)
-    if (needsSpecialOAuthHandling(appName, url)) {
-      const redirect = createSpecialOAuthRedirect(c);
-      if (redirect) {
-        return redirect;
-      }
+    // Handle OAuth apps with custom credentials support
+    const customClientId = url.searchParams.get("clientId");
+    const customClientSecret = url.searchParams.get("clientSecret");
+    
+    // Check if this app supports custom OAuth and no credentials were provided
+    if (appNeedsCustomOAuthSelection(appName) && !customClientId && !customClientSecret) {
+      return createCustomOAuthSelectionHTML(appName, { returnUrl, integrationId, installId });
     }
 
-    // Validate app-specific OAuth parameters
-    const validation = validateAppOAuthParams(appName, url);
-    if (!validation.isValid) {
-      return c.json({ error: validation.error }, 400);
-    }
-
-    // Get app-specific OAuth parameters
-    const appSpecificParams = getAppOAuthStartParams(appName, url);
-
+    // Standard OAuth flow for other apps (or Slack with custom credentials)
     const result = await startOAuth({
       returnUrl,
       appName,
@@ -266,7 +252,6 @@ export const withOAuth = (
       integrationId,
       envVars,
       invoke: c.var.invoke,
-      ...appSpecificParams, // Spread app-specific parameters
     });
 
     if (!result) {
@@ -290,10 +275,6 @@ export const withOAuth = (
       returnUrl,
       redirectUri,
       integrationId,
-      isCustomBot,
-      customClientId,
-      customClientSecret,
-      customBotName,
     } = StateBuilder.parse(
       state,
     );
@@ -316,22 +297,20 @@ export const withOAuth = (
       integrationId?: string | null;
       clientId: string;
       clientSecret: string;
-      customBotName?: string;
       queryParams?: Record<string, string | boolean | undefined>;
     }
 
-    // Determine which credentials to use based on app requirements
-    let clientId: string;
-    let clientSecret: string;
+    // Check if custom credentials are in the callback URL (works for any OAuth app)
+    let clientId = envVars[oauthApp.clientIdKey] as string;
+    let clientSecret = envVars[oauthApp.clientSecretKey] as string;
     
-    if (isCustomBot && customClientId && customClientSecret) {
-      // Use custom bot credentials for apps that support it (like Slack)
+    const url = new URL(c.req.url);
+    const customClientId = url.searchParams.get("clientId");
+    const customClientSecret = url.searchParams.get("clientSecret");
+    
+    if (customClientId && customClientSecret) {
       clientId = customClientId;
       clientSecret = customClientSecret;
-    } else {
-      // Use environment credentials for standard apps
-      clientId = envVars[oauthApp.clientIdKey] as string;
-      clientSecret = envVars[oauthApp.clientSecretKey] as string;
     }
 
     const oauthCallbackAction = `${invokeApp}${OAUTH_CALLBACK_ACTION}`;
@@ -345,7 +324,6 @@ export const withOAuth = (
       integrationId,
       clientId,
       clientSecret,
-      customBotName, // Pass custom bot name for apps that support it
       queryParams: {
         savePermission: c.req.query("savePermission") === "true" ? true : false,
         continue: c.req.query("continue") === "true" ? true : false,

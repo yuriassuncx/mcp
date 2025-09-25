@@ -1,95 +1,15 @@
-import { Context } from "@hono/hono";
-import {
-  shouldRedirectToSelection,
-  extractSlackOAuthParams,
-  validateSlackOAuthParams,
-  getSlackStartParams,
-} from "./apps/deco/slack/utils.ts";
-
 /**
- * Interface for app-specific OAuth handling
+ * Simple Slack OAuth selection page
  */
-export interface OAuthAppHandler {
-  shouldRedirect?(appName: string, url: URL): boolean;
-  createRedirect?(c: Context): Response;
-  extractParams?(url: URL): Record<string, unknown>;
-  validateParams?(url: URL): { isValid: boolean; error?: string };
-  getStartParams?(url: URL): Record<string, unknown>;
-}
-
-/**
- * Registry of OAuth handlers for specific apps
- */
-const OAUTH_APP_HANDLERS: Record<string, OAuthAppHandler> = {
-  slack: {
-    shouldRedirect: shouldRedirectToSelection,
-    createRedirect: (c: Context) => {
-      const url = new URL(c.req.url);
-      const returnUrl = url.searchParams.get("returnUrl");
-      const installId = url.searchParams.get("installId");
-      const integrationId = url.searchParams.get("integrationId");
-      
-      return createSlackSelectionHTML({ returnUrl, integrationId, installId });
-    },
-    extractParams: extractSlackOAuthParams,
-    validateParams: validateSlackOAuthParams,
-    getStartParams: getSlackStartParams,
-  },
-};
-
-/**
- * Get OAuth handler for specific app
- */
-export function getOAuthHandler(appName: string): OAuthAppHandler | null {
-  return OAUTH_APP_HANDLERS[appName.toLowerCase()] || null;
-}
-
-/**
- * Check if app needs special OAuth handling
- */
-export function needsSpecialOAuthHandling(appName: string, url: URL): boolean {
-  const handler = getOAuthHandler(appName);
-  return handler?.shouldRedirect?.(appName, url) ?? false;
-}
-
-/**
- * Create special OAuth redirect for app
- */
-export function createSpecialOAuthRedirect(c: Context): Response | null {
-  const url = new URL(c.req.url);
-  const appName = url.searchParams.get("appName") || "";
-  const handler = getOAuthHandler(appName);
-  return handler?.createRedirect?.(c) ?? null;
-}
-
-/**
- * Validate app-specific OAuth parameters
- */
-export function validateAppOAuthParams(appName: string, url: URL): { isValid: boolean; error?: string } {
-  const handler = getOAuthHandler(appName);
-  return handler?.validateParams?.(url) ?? { isValid: true };
-}
-
-/**
- * Get app-specific OAuth start parameters
- */
-export function getAppOAuthStartParams(appName: string, url: URL): Record<string, unknown> {
-  const handler = getOAuthHandler(appName);
-  return handler?.getStartParams?.(url) ?? {};
-}
-
-/**
- * Create Slack selection HTML page
- */
-function createSlackSelectionHTML(params: {
+export function createSlackSelectionHTML(params: {
   returnUrl?: string | null;
   integrationId?: string | null;
-  installId?: string | null;
+  installId: string;
 }): Response {
-  const queryString = new URLSearchParams();
-  if (params.returnUrl) queryString.set("returnUrl", params.returnUrl);
-  if (params.integrationId) queryString.set("integrationId", params.integrationId);
-  if (params.installId) queryString.set("installId", params.installId);
+  const queryParams = new URLSearchParams();
+  if (params.returnUrl) queryParams.set("returnUrl", params.returnUrl);
+  if (params.integrationId) queryParams.set("integrationId", params.integrationId);
+  queryParams.set("installId", params.installId);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -116,7 +36,6 @@ function createSlackSelectionHTML(params: {
           </div>
         </div>
       </div>
-
       <div class="p-8 space-y-6">
         <!-- Native Bot Option -->
         <div class="border-2 border-green-200 rounded-lg p-6 hover:border-green-300 transition-colors bg-green-50">
@@ -134,12 +53,11 @@ function createSlackSelectionHTML(params: {
           <p class="text-gray-600 text-sm mb-4">
             Use the official deco.chat bot with automatic configuration. No setup required.
           </p>
-          <a href="/oauth/start?appName=slack&${queryString.toString()}" 
+          <a href="/oauth/start?appName=slack&${queryParams.toString()}" 
              class="inline-block w-full bg-green-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-700 transition-colors text-center">
             Continue with Native Bot
           </a>
         </div>
-
         <!-- Custom Bot Option -->
         <div class="border-2 border-gray-200 rounded-lg p-6">
           <div class="flex items-center space-x-3 mb-4">
@@ -180,7 +98,6 @@ function createSlackSelectionHTML(params: {
             </button>
           </form>
         </div>
-
         ${params.returnUrl ? `
         <div class="text-center pt-4">
           <a href="${params.returnUrl}" class="text-gray-600 hover:text-gray-800 transition-colors">
@@ -191,7 +108,6 @@ function createSlackSelectionHTML(params: {
       </div>
     </div>
   </div>
-
   <script>
     document.getElementById('customBotForm').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -205,7 +121,7 @@ function createSlackSelectionHTML(params: {
         return;
       }
       
-      const params = new URLSearchParams('${queryString.toString()}');
+      const params = new URLSearchParams('${queryParams.toString()}');
       params.set('customBot', 'true');
       params.set('clientId', clientId);
       params.set('clientSecret', clientSecret);
