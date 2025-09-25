@@ -8,6 +8,13 @@ import {
   schemaFromAppName,
 } from "./utils.ts";
 
+import {
+  needsSpecialOAuthHandling,
+  createSpecialOAuthRedirect,
+  validateAppOAuthParams,
+  getAppOAuthStartParams,
+} from "./oauth-handlers.ts";
+
 const OAUTH_START_LOADER = "/loaders/oauth/start.ts";
 const OAUTH_CALLBACK_ACTION = "/actions/oauth/callback.ts";
 
@@ -22,6 +29,10 @@ interface State {
   returnUrl?: string | null;
   redirectUri?: string | null;
   integrationId?: string | null;
+  isCustomBot?: boolean;
+  customClientId?: string;
+  customClientSecret?: string;
+  customBotName?: string;
 }
 
 export const StateBuilder = {
@@ -32,6 +43,10 @@ export const StateBuilder = {
     returnUrl?: string | null,
     redirectUri?: string | null,
     integrationId?: string | null,
+    isCustomBot?: boolean,
+    customClientId?: string,
+    customClientSecret?: string,
+    customBotName?: string,
   ) => {
     return encodeURIComponent(btoa(JSON.stringify({
       appName,
@@ -40,6 +55,10 @@ export const StateBuilder = {
       returnUrl,
       redirectUri,
       integrationId,
+      isCustomBot,
+      customClientId,
+      customClientSecret,
+      customBotName,
     })));
   },
   parse: (state: string): State & StateProvider => {
@@ -122,12 +141,26 @@ interface OAuthStartParams {
   instance: MCPInstance;
   envVars: Record<string, unknown>;
   invoke: MCPState["Variables"]["invoke"];
+  isCustomBot?: boolean;
+  customClientId?: string;
+  customClientSecret?: string;
+  customBotName?: string;
 }
 
 // deno-lint-ignore no-explicit-any
 export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
-  const { appName, installId, instance, returnUrl, envVars, integrationId } =
-    params;
+  const { 
+    appName, 
+    installId, 
+    instance, 
+    returnUrl, 
+    envVars, 
+    integrationId,
+    isCustomBot,
+    customClientId,
+    customClientSecret,
+    customBotName
+  } = params;
 
   const redirectUri = new URL(
     `/oauth/callback`,
@@ -155,7 +188,14 @@ export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
     return null;
   }
 
-  const clientId = envVars[oauthApp.clientIdKey];
+  // Use custom bot credentials if provided, otherwise use environment credentials
+  let clientId: string;
+  if (isCustomBot && customClientId) {
+    clientId = customClientId;
+  } else {
+    clientId = envVars[oauthApp.clientIdKey] as string;
+  }
+
   const scopes = oauthApp.scopes;
 
   const state = StateBuilder.build(
@@ -165,6 +205,10 @@ export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
     returnUrl,
     redirectUri.href,
     integrationId,
+    isCustomBot,
+    customClientId,
+    customClientSecret,
+    customBotName,
   );
   const oauthStartLoader = `${invokeApp}${OAUTH_START_LOADER}`;
   const props = {
@@ -192,8 +236,27 @@ export const withOAuth = (
     const installId = c.var.installId;
     const envVars = env(c);
     const url = new URL(c.req.url);
+    
+    // Extract standard OAuth parameters
     const returnUrl = url.searchParams.get("returnUrl");
     const integrationId = url.searchParams.get("integrationId");
+
+    // Check if this app needs special OAuth handling (e.g., selection page)
+    if (needsSpecialOAuthHandling(appName, url)) {
+      const redirect = createSpecialOAuthRedirect(c);
+      if (redirect) {
+        return redirect;
+      }
+    }
+
+    // Validate app-specific OAuth parameters
+    const validation = validateAppOAuthParams(appName, url);
+    if (!validation.isValid) {
+      return c.json({ error: validation.error }, 400);
+    }
+
+    // Get app-specific OAuth parameters
+    const appSpecificParams = getAppOAuthStartParams(appName, url);
 
     const result = await startOAuth({
       returnUrl,
@@ -203,6 +266,7 @@ export const withOAuth = (
       integrationId,
       envVars,
       invoke: c.var.invoke,
+      ...appSpecificParams, // Spread app-specific parameters
     });
 
     if (!result) {
@@ -226,6 +290,10 @@ export const withOAuth = (
       returnUrl,
       redirectUri,
       integrationId,
+      isCustomBot,
+      customClientId,
+      customClientSecret,
+      customBotName,
     } = StateBuilder.parse(
       state,
     );
@@ -237,6 +305,7 @@ export const withOAuth = (
     if (!oauthApp) {
       return c.json({ error: `App ${appName} not found` }, 404);
     }
+
     interface OAuthCallbackProps {
       installId: string;
       appName: string;
@@ -247,7 +316,22 @@ export const withOAuth = (
       integrationId?: string | null;
       clientId: string;
       clientSecret: string;
+      customBotName?: string;
       queryParams?: Record<string, string | boolean | undefined>;
+    }
+
+    // Determine which credentials to use based on app requirements
+    let clientId: string;
+    let clientSecret: string;
+    
+    if (isCustomBot && customClientId && customClientSecret) {
+      // Use custom bot credentials for apps that support it (like Slack)
+      clientId = customClientId;
+      clientSecret = customClientSecret;
+    } else {
+      // Use environment credentials for standard apps
+      clientId = envVars[oauthApp.clientIdKey] as string;
+      clientSecret = envVars[oauthApp.clientSecretKey] as string;
     }
 
     const oauthCallbackAction = `${invokeApp}${OAUTH_CALLBACK_ACTION}`;
@@ -259,8 +343,9 @@ export const withOAuth = (
       returnUrl,
       redirectUri,
       integrationId,
-      clientId: envVars[oauthApp.clientIdKey] as string,
-      clientSecret: envVars[oauthApp.clientSecretKey] as string,
+      clientId,
+      clientSecret,
+      customBotName, // Pass custom bot name for apps that support it
       queryParams: {
         savePermission: c.req.query("savePermission") === "true" ? true : false,
         continue: c.req.query("continue") === "true" ? true : false,
