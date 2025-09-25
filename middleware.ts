@@ -1,8 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
 import { CallToolMiddleware, ListToolsMiddleware, Tool } from "@deco/mcp";
-import checkConfiguration from "./actions/mcps/check.ts";
-import configure from "./actions/mcps/configure.ts";
-import searchMCPs from "./loaders/mcps/search.ts";
 import { startOAuth } from "./oauth.ts";
 import { MCPInstance, MCPState } from "./registry.ts";
 
@@ -11,8 +8,6 @@ export interface MiddlewareOptions {
   installId: string;
   instance: Promise<MCPInstance>;
 }
-const CHECK_CONFIGURATION_TOOL = "CONFIGURATION_CHECK";
-const CONFIGURE_MCP_TOOL = "CONFIGURE";
 const OAUTH_START_TOOL = "DECO_CHAT_OAUTH_START";
 
 const OAUTH_TOOL: Tool = {
@@ -40,16 +35,11 @@ const OAUTH_TOOL: Tool = {
   },
 };
 export const middlewaresFor = (
-  { appName, installId, instance }: MiddlewareOptions,
+  { appName, instance }: MiddlewareOptions,
 ): {
   listTools: ListToolsMiddleware[];
   callTool: CallToolMiddleware[];
 } => {
-  const checkConfigurationTool = `${
-    slugify(appName)
-  }_${CHECK_CONFIGURATION_TOOL}`;
-  const configureMcpTool = `${slugify(appName)}_${CONFIGURE_MCP_TOOL}`;
-
   return {
     callTool: [
       async (req, next) => {
@@ -102,73 +92,17 @@ export const middlewaresFor = (
             structuredContent: result,
           };
         }
-        if (req.params.name === configureMcpTool) {
-          const result = await configure({
-            id: appName,
-            installId,
-            props: req.params.arguments!,
-          });
-          return {
-            content: [{
-              type: "text",
-              text: JSON.stringify(result),
-            }],
-            structuredContent: result as any,
-          };
-        }
-        if (req.params.name === checkConfigurationTool) {
-          const result = await checkConfiguration({ installId });
-          return {
-            content: [{
-              type: "text",
-              text: JSON.stringify(result),
-            }],
-            structuredContent: result,
-          };
-        }
         return next!();
       },
     ],
     listTools: [async (_req, next) => {
-      const [{ tools }, apps] = await Promise.all([next!(), searchMCPs()]);
-
-      const inputSchema = apps.find((app) =>
-        app.name === decodeURIComponent(appName)
-      )?.inputSchema;
+      const { tools } = await next!();
 
       const hasOAuth = tools.some((tool) => tool.name === OAUTH_START_TOOL);
 
       return {
-        tools: [...tools, ...(!hasOAuth ? [OAUTH_TOOL] : []), {
-          name: checkConfigurationTool,
-          description:
-            "Check if the configuration is valid, no input is needed.",
-          inputSchema: {
-            type: "object",
-          },
-          resolveType: checkConfigurationTool,
-          outputSchema: {
-            type: "object",
-            properties: {
-              success: { type: "boolean" },
-              errors: { type: "array", items: { type: "string" } },
-              inputSchema: { type: "object" },
-              schema: { type: "object" },
-            },
-          },
-        } as Tool, {
-          name: configureMcpTool,
-          description: "Configure the MCP, input is the configuration",
-          inputSchema: inputSchema || { type: "object" },
-          outputSchema: {
-            type: "object",
-          },
-        } as Tool],
+        tools: [...tools, ...(!hasOAuth ? [OAUTH_TOOL] : [])],
       };
     }],
   };
 };
-
-function slugify(appName: string) {
-  return appName.replace(/ /g, "_");
-}
