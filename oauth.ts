@@ -7,6 +7,12 @@ import {
   parseInvokeResponse,
   schemaFromAppName,
 } from "./utils.ts";
+import {
+  cleanupExpiredSessions,
+  CustomBotState,
+  invalidateSession,
+  retrieveCustomBotSession,
+} from "./utils/state-helpers.ts";
 
 const OAUTH_START_LOADER = "/loaders/oauth/start.ts";
 const OAUTH_CALLBACK_ACTION = "/actions/oauth/callback.ts";
@@ -167,6 +173,8 @@ export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
     integrationId,
   );
   const oauthStartLoader = `${invokeApp}${OAUTH_START_LOADER}`;
+
+  // SECURITY: Remove clientSecret from props - will be handled via session tokens
   const props = {
     installId,
     appName,
@@ -187,6 +195,9 @@ export const withOAuth = (
     MCPState
   >,
 ) => {
+  // Cleanup expired sessions periodically
+  setInterval(cleanupExpiredSessions, 5 * 60 * 1000); // Every 5 minutes
+
   app.get("/oauth/start", async (c) => {
     const appName = c.var.appName;
     const installId = c.var.installId;
@@ -195,15 +206,21 @@ export const withOAuth = (
     const returnUrl = url.searchParams.get("returnUrl");
     const integrationId = url.searchParams.get("integrationId");
 
-    const customClientId = url.searchParams.get("clientId");
-    const customClientSecret = url.searchParams.get("clientSecret");
+    const sessionToken = url.searchParams.get("sessionToken");
 
     const finalEnvVars = { ...envVars };
-    if (customClientId && customClientSecret) {
+
+    // SECURITY: Handle custom bot credentials via session token
+    if (sessionToken) {
+      const credentials = retrieveCustomBotSession(sessionToken);
+      if (!credentials) {
+        return c.json({ error: "Invalid or expired session token" }, 400);
+      }
+
       const oauthApp = getOAuthConfigForApp(appName);
       if (oauthApp) {
-        finalEnvVars[oauthApp.clientIdKey] = customClientId;
-        finalEnvVars[oauthApp.clientSecretKey] = customClientSecret;
+        finalEnvVars[oauthApp.clientIdKey] = credentials.clientId;
+        finalEnvVars[oauthApp.clientSecretKey] = credentials.clientSecret;
       }
     }
 
@@ -243,6 +260,7 @@ export const withOAuth = (
     }
 
     try {
+      const parsedState = StateBuilder.parse(state);
       const {
         appName,
         installId,
@@ -250,7 +268,7 @@ export const withOAuth = (
         returnUrl,
         redirectUri,
         integrationId,
-      } = StateBuilder.parse(state);
+      } = parsedState;
 
       const envVars = env(c);
       const oauthApp = getOAuthConfigForApp(appName);
@@ -272,8 +290,22 @@ export const withOAuth = (
         queryParams?: Record<string, string | boolean | undefined>;
       }
 
-      const clientId = envVars[oauthApp.clientIdKey] as string;
-      const clientSecret = envVars[oauthApp.clientSecretKey] as string;
+      let clientId = envVars[oauthApp.clientIdKey] as string;
+      let clientSecret = envVars[oauthApp.clientSecretKey] as string;
+
+      // SECURITY: Handle custom bot session token if present in state
+      const customBotState = parsedState as unknown as CustomBotState;
+      if (customBotState.sessionToken && customBotState.isCustomBot) {
+        const credentials = retrieveCustomBotSession(
+          customBotState.sessionToken,
+        );
+        if (credentials) {
+          clientId = credentials.clientId;
+          clientSecret = credentials.clientSecret;
+          // Invalidate session token after successful use
+          invalidateSession(customBotState.sessionToken);
+        }
+      }
 
       const oauthCallbackAction = `${invokeApp}${OAUTH_CALLBACK_ACTION}`;
       const props: OAuthCallbackProps = {
