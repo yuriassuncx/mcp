@@ -195,22 +195,45 @@ export const withOAuth = (
     const returnUrl = url.searchParams.get("returnUrl");
     const integrationId = url.searchParams.get("integrationId");
 
-    const result = await startOAuth({
-      returnUrl,
-      appName,
-      installId,
-      instance: c.var.instance,
-      integrationId,
-      envVars,
-      invoke: c.var.invoke,
-    });
+    const customClientId = url.searchParams.get("clientId");
+    const customClientSecret = url.searchParams.get("clientSecret");
 
-    if (!result) {
-      return c.json({ error: "App not found" }, 404);
+    const finalEnvVars = { ...envVars };
+    if (customClientId && customClientSecret) {
+      const oauthApp = getOAuthConfigForApp(appName);
+      if (oauthApp) {
+        finalEnvVars[oauthApp.clientIdKey] = customClientId;
+        finalEnvVars[oauthApp.clientSecretKey] = customClientSecret;
+      }
     }
 
-    return parseInvokeResponse(result, c) ??
-      new Response(null, { status: 204 });
+    try {
+      const result = await startOAuth({
+        returnUrl,
+        appName,
+        installId,
+        instance: c.var.instance,
+        integrationId,
+        envVars: finalEnvVars,
+        invoke: c.var.invoke,
+      });
+
+      if (!result) {
+        return c.json({ error: "App not found" }, 404);
+      }
+
+      return parseInvokeResponse(result, c) ??
+        new Response(null, { status: 204 });
+    } catch (error) {
+      console.error("OAuth start error:", error);
+      const errorMessage = error instanceof Error
+        ? error.message
+        : "Unknown error";
+      return c.json(
+        { error: "OAuth initialization failed: " + errorMessage },
+        500,
+      );
+    }
   });
   app.get("/oauth/callback", async (c) => {
     const state = c.req.query("state");
@@ -219,84 +242,101 @@ export const withOAuth = (
       return c.json({ error: "State is required" }, 400);
     }
 
-    const {
-      appName,
-      installId,
-      invokeApp,
-      returnUrl,
-      redirectUri,
-      integrationId,
-    } = StateBuilder.parse(
-      state,
-    );
+    try {
+      const {
+        appName,
+        installId,
+        invokeApp,
+        returnUrl,
+        redirectUri,
+        integrationId,
+      } = StateBuilder.parse(state);
 
-    const envVars = env(c);
+      const envVars = env(c);
+      const oauthApp = getOAuthConfigForApp(appName);
 
-    const oauthApp = getOAuthConfigForApp(appName);
-
-    if (!oauthApp) {
-      return c.json({ error: `App ${appName} not found` }, 404);
-    }
-    interface OAuthCallbackProps {
-      installId: string;
-      appName: string;
-      code: string | undefined;
-      state: string;
-      returnUrl?: string | null;
-      redirectUri?: string | null;
-      integrationId?: string | null;
-      clientId: string;
-      clientSecret: string;
-      queryParams?: Record<string, string | boolean | undefined>;
-    }
-
-    const oauthCallbackAction = `${invokeApp}${OAUTH_CALLBACK_ACTION}`;
-    const props: OAuthCallbackProps = {
-      installId,
-      appName,
-      code: c.req.query("code"),
-      state,
-      returnUrl,
-      redirectUri,
-      integrationId,
-      clientId: envVars[oauthApp.clientIdKey] as string,
-      clientSecret: envVars[oauthApp.clientSecretKey] as string,
-      queryParams: {
-        savePermission: c.req.query("savePermission") === "true" ? true : false,
-        continue: c.req.query("continue") === "true" ? true : false,
-        permissions: c.req.query("permissions") ?? undefined,
-      },
-    };
-
-    const response = await invoke(oauthCallbackAction, props, c);
-    const isHtml = response?.headers.get("content-type")?.includes("text/html");
-
-    if (response && returnUrl && !isHtml) {
-      const { installId, name, account } = await response.json();
-      const thisUrl = new URL(c.req.url);
-      thisUrl.protocol = "https:";
-      if (thisUrl.hostname === "localhost") {
-        thisUrl.protocol = "http:";
+      if (!oauthApp) {
+        return c.json({ error: `App ${appName} not found` }, 404);
       }
-      const url = new URL(returnUrl);
-      url.searchParams.set("appName", appName);
-      url.searchParams.set("installId", installId);
-      integrationId && url.searchParams.set("integrationId", integrationId);
-      url.searchParams.set(
-        "mcpUrl",
-        new URL(`/apps/${appName}/${installId}/mcp/messages`, thisUrl.origin)
-          .href,
-      );
-      name && url.searchParams.set("name", name);
-      account && url.searchParams.set("account", account);
-      return c.redirect(url.toString());
-    }
 
-    if (!response) {
-      return c.html(
-        "<html><body>Success! You may close this window.</body></html>",
+      interface OAuthCallbackProps {
+        installId: string;
+        appName: string;
+        code: string | undefined;
+        state: string;
+        returnUrl?: string | null;
+        redirectUri?: string | null;
+        integrationId?: string | null;
+        clientId: string;
+        clientSecret: string;
+        queryParams?: Record<string, string | boolean | undefined>;
+      }
+
+      const clientId = envVars[oauthApp.clientIdKey] as string;
+      const clientSecret = envVars[oauthApp.clientSecretKey] as string;
+
+      const oauthCallbackAction = `${invokeApp}${OAUTH_CALLBACK_ACTION}`;
+      const props: OAuthCallbackProps = {
+        installId,
+        appName,
+        code: c.req.query("code"),
+        state,
+        returnUrl,
+        redirectUri,
+        integrationId,
+        clientId,
+        clientSecret,
+        queryParams: {
+          savePermission: c.req.query("savePermission") === "true"
+            ? true
+            : false,
+          continue: c.req.query("continue") === "true" ? true : false,
+          permissions: c.req.query("permissions") ?? undefined,
+        },
+      };
+
+      const response = await invoke(oauthCallbackAction, props, c);
+      const isHtml = response?.headers.get("content-type")?.includes(
+        "text/html",
       );
+
+      if (response && returnUrl && !isHtml) {
+        const responseData = await response.json();
+
+        const { installId: responseInstallId, name, account } = responseData;
+        const thisUrl = new URL(c.req.url);
+        thisUrl.protocol = "https:";
+        if (thisUrl.hostname === "localhost") {
+          thisUrl.protocol = "http:";
+        }
+        const url = new URL(returnUrl);
+        url.searchParams.set("appName", appName);
+        url.searchParams.set("installId", responseInstallId);
+        integrationId && url.searchParams.set("integrationId", integrationId);
+        url.searchParams.set(
+          "mcpUrl",
+          new URL(
+            `/apps/${appName}/${responseInstallId}/mcp/messages`,
+            thisUrl.origin,
+          )
+            .href,
+        );
+        name && url.searchParams.set("name", name);
+        account && url.searchParams.set("account", account);
+
+        return c.redirect(url.toString());
+      }
+
+      if (!response) {
+        return c.html(
+          "<html><body>Success! You may close this window.</body></html>",
+        );
+      }
+
+      return response;
+    } catch (error) {
+      console.error("OAuth callback state parsing error:", error);
+      return c.json({ error: "Invalid state parameter" }, 400);
     }
-    return response;
   });
 };
