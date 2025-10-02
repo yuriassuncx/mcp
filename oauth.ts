@@ -28,6 +28,9 @@ interface State {
   returnUrl?: string | null;
   redirectUri?: string | null;
   integrationId?: string | null;
+  botName?: string;
+  sessionToken?: string;
+  isCustomBot?: boolean;
 }
 
 export const StateBuilder = {
@@ -38,6 +41,7 @@ export const StateBuilder = {
     returnUrl?: string | null,
     redirectUri?: string | null,
     integrationId?: string | null,
+    botName?: string,
   ) => {
     return encodeURIComponent(btoa(JSON.stringify({
       appName,
@@ -46,6 +50,7 @@ export const StateBuilder = {
       returnUrl,
       redirectUri,
       integrationId,
+      botName,
     })));
   },
   parse: (state: string): State & StateProvider => {
@@ -128,12 +133,22 @@ interface OAuthStartParams {
   instance: MCPInstance;
   envVars: Record<string, unknown>;
   invoke: MCPState["Variables"]["invoke"];
+  isCustomBot?: boolean;
+  sessionToken?: string;
+  botName?: string;
 }
 
 // deno-lint-ignore no-explicit-any
 export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
-  const { appName, installId, instance, returnUrl, envVars, integrationId } =
-    params;
+  const {
+    appName,
+    installId,
+    instance,
+    returnUrl,
+    envVars,
+    integrationId,
+    botName,
+  } = params;
 
   const redirectUri = new URL(
     `/oauth/callback`,
@@ -171,10 +186,11 @@ export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
     returnUrl,
     redirectUri.href,
     integrationId,
+    botName,
   );
+
   const oauthStartLoader = `${invokeApp}${OAUTH_START_LOADER}`;
 
-  // SECURITY: Remove clientSecret from props - will be handled via session tokens
   const props = {
     installId,
     appName,
@@ -191,12 +207,9 @@ export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
 };
 
 export const withOAuth = (
-  app: Hono<
-    MCPState
-  >,
+  app: Hono<MCPState>,
 ) => {
-  // Cleanup expired sessions periodically
-  setInterval(cleanupExpiredSessions, 5 * 60 * 1000); // Every 5 minutes
+  setInterval(cleanupExpiredSessions, 5 * 60 * 1000);
 
   app.get("/oauth/start", async (c) => {
     const appName = c.var.appName;
@@ -207,10 +220,8 @@ export const withOAuth = (
     const integrationId = url.searchParams.get("integrationId");
 
     const sessionToken = url.searchParams.get("sessionToken");
-
     const finalEnvVars = { ...envVars };
 
-    // SECURITY: Handle custom bot credentials via session token
     if (sessionToken) {
       const credentials = retrieveCustomBotSession(sessionToken);
       if (!credentials) {
@@ -221,6 +232,33 @@ export const withOAuth = (
       if (oauthApp) {
         finalEnvVars[oauthApp.clientIdKey] = credentials.clientId;
         finalEnvVars[oauthApp.clientSecretKey] = credentials.clientSecret;
+      }
+
+      try {
+        const result = await startOAuth({
+          returnUrl,
+          appName,
+          installId,
+          instance: c.var.instance,
+          integrationId,
+          envVars: finalEnvVars,
+          invoke: c.var.invoke,
+          isCustomBot: !!sessionToken,
+          sessionToken,
+          botName: credentials.botName,
+        });
+
+        return parseInvokeResponse(result, c) ??
+          new Response(null, { status: 204 });
+      } catch (error) {
+        console.error("OAuth start error:", error);
+        const errorMessage = error instanceof Error
+          ? error.message
+          : "Unknown error";
+        return c.json(
+          { error: "OAuth initialization failed: " + errorMessage },
+          500,
+        );
       }
     }
 
@@ -233,6 +271,7 @@ export const withOAuth = (
         integrationId,
         envVars: finalEnvVars,
         invoke: c.var.invoke,
+        isCustomBot: false,
       });
 
       if (!result) {
@@ -287,13 +326,14 @@ export const withOAuth = (
         integrationId?: string | null;
         clientId: string;
         clientSecret: string;
+        customBotName?: string;
         queryParams?: Record<string, string | boolean | undefined>;
       }
 
       let clientId = envVars[oauthApp.clientIdKey] as string;
       let clientSecret = envVars[oauthApp.clientSecretKey] as string;
+      let customBotName: string | undefined;
 
-      // SECURITY: Handle custom bot session token if present in state
       const customBotState = parsedState as unknown as CustomBotState;
       if (customBotState.sessionToken && customBotState.isCustomBot) {
         const credentials = retrieveCustomBotSession(
@@ -302,7 +342,7 @@ export const withOAuth = (
         if (credentials) {
           clientId = credentials.clientId;
           clientSecret = credentials.clientSecret;
-          // Invalidate session token after successful use
+          customBotName = credentials.botName;
           invalidateSession(customBotState.sessionToken);
         }
       }
@@ -318,6 +358,7 @@ export const withOAuth = (
         integrationId,
         clientId,
         clientSecret,
+        customBotName,
         queryParams: {
           savePermission: c.req.query("savePermission") === "true"
             ? true
