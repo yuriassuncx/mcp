@@ -136,6 +136,7 @@ interface OAuthStartParams {
   isCustomBot?: boolean;
   sessionToken?: string;
   botName?: string;
+  debugMode?: boolean;
 }
 
 // deno-lint-ignore no-explicit-any
@@ -200,6 +201,7 @@ export const startOAuth = async (params: OAuthStartParams): Promise<any> => {
     clientId,
     scopes,
     integrationId,
+    debugMode: params.debugMode,
   };
 
   // deno-lint-ignore no-explicit-any
@@ -220,6 +222,7 @@ export const withOAuth = (
     const integrationId = url.searchParams.get("integrationId");
 
     const sessionToken = url.searchParams.get("sessionToken");
+    const debugMode = url.searchParams.get("debugMode") === "true";
     const finalEnvVars = { ...envVars };
 
     if (sessionToken) {
@@ -246,6 +249,7 @@ export const withOAuth = (
           isCustomBot: !!sessionToken,
           sessionToken,
           botName: credentials.botName,
+          debugMode,
         });
 
         return parseInvokeResponse(result, c) ??
@@ -272,6 +276,7 @@ export const withOAuth = (
         envVars: finalEnvVars,
         invoke: c.var.invoke,
         isCustomBot: false,
+        debugMode,
       });
 
       if (!result) {

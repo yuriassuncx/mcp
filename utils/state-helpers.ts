@@ -2,6 +2,7 @@ export interface CustomBotState {
   customBotName?: string;
   isCustomBot?: boolean;
   sessionToken?: string;
+  debugMode?: boolean;
   [key: string]: unknown;
 }
 
@@ -37,6 +38,7 @@ const sessionStore = new Map<string, {
   clientId: string;
   clientSecret: string;
   botName?: string;
+  debugMode?: boolean;
   expiresAt: number;
 }>();
 
@@ -44,6 +46,7 @@ export function storeCustomBotSession(
   clientId: string,
   clientSecret: string,
   botName?: string,
+  debugMode?: boolean,
 ): string {
   const sessionToken = generateSessionToken();
   const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes expiry
@@ -52,6 +55,7 @@ export function storeCustomBotSession(
     clientId,
     clientSecret,
     botName,
+    debugMode,
     expiresAt,
   });
 
@@ -62,6 +66,7 @@ export function retrieveCustomBotSession(sessionToken: string): {
   clientId: string;
   clientSecret: string;
   botName?: string;
+  debugMode?: boolean;
 } | null {
   const session = sessionStore.get(sessionToken);
 
@@ -80,6 +85,7 @@ export function retrieveCustomBotSession(sessionToken: string): {
     clientId: session.clientId,
     clientSecret: session.clientSecret,
     botName: session.botName,
+    debugMode: session.debugMode,
   };
 }
 
